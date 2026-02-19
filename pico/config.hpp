@@ -1,16 +1,14 @@
 #pragma once
 
-//PICO uses Serial1
-#define PICO_TXPIN   18
-#define PICO_RXPIN   19
-#define PICO_BAUDRATE  115200
-
-//RP uses Serial2
-#define RP_TXPIN   17
-#define RP_RXPIN   16
-#define RP_BAUDRATE  115200
-
 //BNO055
-#define BNO055_SDA  21
-#define BNO055_SCL  22
-#define BNO055_BAUDRATE 10000
+#define BNO055_PORT i2c1
+#define BNO055_ADDR 0x28
+#define BNO055_SDA  27
+#define BNO055_SCL  26
+
+//PIO pins of ESC
+#define PIO_VB 5
+#define PIO_VR 6
+#define PIO_VL 7
+#define PIO_HR 8
+#define PIO_HL 9
