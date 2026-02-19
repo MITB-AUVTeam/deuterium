@@ -6,13 +6,13 @@ extern Throttle throttle;
 
 const float dt = 0.1;   // 100 ms control loop
 
-/* ================= OUTER LOOP PI (ANGLES) ================= */
+//outer loop PID
 float Kp_ang = 5.0;
 float Ki_ang = 1.0;
 float rollInt = 0;
 float pitchInt = 0;
 
-/* ================= INNER LOOP LQR (RATES) ================= */
+//inner loop LQR
 float K_lqr[3][2] = {
   { 1.5, -1},
   { -1.5, -1 },
@@ -22,8 +22,6 @@ const float U_MAX = 1.0;
 float u_smooth[3] = { 0, 0, 0 };
 const float beta = 0.2; // LQR output smoothing factor
 
-
-/* ================= FUNCTIONS ================= */
 static inline float constrain(float v, float lo, float hi) {
     return (v < lo) ? lo : (v > hi) ? hi : v;
 }
@@ -33,6 +31,7 @@ int clampDSHOT(int value) {
         return constrain(value + 48, 0, 1000);
     else if (value <= 0)
         return constrain(-value + 1049, 1001, 2000);
+    return 48;
 }
 
 void control::update() {
@@ -47,7 +46,7 @@ void control::update() {
     float wx_ref = Kp_ang * state.roll + Ki_ang * rollInt;
     float wy_ref = Kp_ang * state.pitch + Ki_ang * pitchInt;
 
-    // ================= INNER LOOP LQR =================
+    //inner loop LQR
     float omega_err[2] = { state.wx - wx_ref, state.wy - wy_ref };
 
     // Deadband for gyro errors
@@ -68,12 +67,11 @@ void control::update() {
         u[2] *= U_MAX / umax;
     }
 
-    // ================= SMOOTH LQR OUTPUT =================
+    //lqr smooth output
     for (int i = 0; i < 3; i++) {
         u_smooth[i] = beta * u[i] + (1 - beta) * u_smooth[i];
     }
-    // ================= THRUSTER MIXING =================
-    // Vertical thrusters: LQR only
+
     throttle.VL = clampDSHOT(u_smooth[0] * 150);
     throttle.VR = clampDSHOT(u_smooth[1] * 150);
     throttle.VB = clampDSHOT(u_smooth[2] * 150);

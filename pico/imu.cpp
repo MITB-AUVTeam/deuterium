@@ -48,7 +48,7 @@ void imu::init() {
 
     uint8_t data[2];
 
-    data[0] = 0x3D;     // OPR_MODE register
+    data[0] = 0x3D;     // OPR_MODE
     data[1] = 0x00;     // CONFIG mode
     i2c_write_blocking(I2C_PORT, addr, data, 2, false);
     sleep_ms(50);
@@ -63,7 +63,7 @@ void imu::init() {
     i2c_write_blocking(I2C_PORT, addr, data, 2, false);
     sleep_ms(50);
 
-    data[0] = 0x3D;
+    data[0] = 0x3D;     // OPR_MODE
     data[1] = 0x08;     // IMU
     i2c_write_blocking(I2C_PORT, addr, data, 2, false);
     sleep_ms(500);

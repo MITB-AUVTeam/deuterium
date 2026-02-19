@@ -28,43 +28,43 @@ set(PICO_BOARD pico CACHE STRING "Board type")
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 
-project(masterpico C CXX ASM)
+project(pico C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(masterpico 
-    masterpico.cpp     
+add_executable(pico 
+    pico.cpp     
     imu.cpp
     control.cpp
     )
 
-pico_set_program_name(masterpico "masterpico")
-pico_set_program_version(masterpico "0.1")
+pico_set_program_name(pico "pico")
+pico_set_program_version(pico "0.1")
 
 # Generate PIO header
-pico_generate_pio_header(masterpico ${CMAKE_CURRENT_LIST_DIR}/dshot.pio)
+pico_generate_pio_header(pico ${CMAKE_CURRENT_LIST_DIR}/dshot.pio)
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(masterpico 1)
-pico_enable_stdio_usb(masterpico 1)
+pico_enable_stdio_uart(pico 1)
+pico_enable_stdio_usb(pico 1)
 
 # Add the standard library to the build
-target_link_libraries(masterpico
+target_link_libraries(pico
         pico_stdlib)
 
 # Add the standard include files to the build
-target_include_directories(masterpico PRIVATE
+target_include_directories(pico PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
 )
 
 # Add any user requested libraries
-target_link_libraries(masterpico 
+target_link_libraries(pico 
         hardware_pio
         hardware_i2c
         )
 
-pico_add_extra_outputs(masterpico)
+pico_add_extra_outputs(pico)
 
