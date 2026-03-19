@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <string.h>
 #include "pico/stdlib.h"
 #include "config.hpp"
 #include "structs.hpp"
