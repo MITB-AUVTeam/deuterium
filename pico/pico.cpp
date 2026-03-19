@@ -58,7 +58,7 @@ int main(void) {
         if (control_flag) {
             control_flag = false;
             imu::update();
-            control::update();
+            stb::update();
         }
 
         printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
