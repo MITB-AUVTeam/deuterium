@@ -5,7 +5,6 @@
 #include <cmath>
 #include "structs.hpp"
 #include "config.hpp"
-#include "control.hpp"
 #pragma once
 
 
