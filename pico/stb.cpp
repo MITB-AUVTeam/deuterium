@@ -34,7 +34,7 @@ int clampDSHOT(int value) {
     return 48;
 }
 
-void control::update() {
+void stb::update() {
 
     rollInt += state.roll * dt;
     pitchInt += state.pitch * dt;
