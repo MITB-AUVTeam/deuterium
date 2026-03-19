@@ -40,6 +40,7 @@ int main(void) {
     esc::pio_init();
     esc::arm();
     esc::mode3d();
+    raspi::init();
 
     printf("program initialised\n");
 
