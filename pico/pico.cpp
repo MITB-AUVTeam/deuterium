@@ -12,13 +12,14 @@
 #include "stb.hpp"
 #include "esc.hpp"
 #include "raspi.hpp"
+#include "nav.hpp"
 
-volatile bool control_flag = false;
+volatile bool stb_flag = false;
 struct repeating_timer control_timer;
 
 bool control_timer_cb(struct repeating_timer* t)
 {
-    control_flag = true;
+    stb_flag = true;
     return true;
 }
 
@@ -55,11 +56,13 @@ int main(void) {
 
         raspi::update();
 
-        if (control_flag) {
-            control_flag = false;
+        if (stb_flag) {
+            stb_flag = false;
             imu::update();
             stb::update();
         }
+
+        nav::update();
 
         printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
 

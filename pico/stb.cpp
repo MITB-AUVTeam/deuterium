@@ -27,9 +27,9 @@ static inline float constrain(float v, float lo, float hi) {
 }
 
 int clampDSHOT(int value) {
-    if (value > 0)
+    if (value >= 0)
         return constrain(value + 48, 0, 1000);
-    else if (value <= 0)
+    else if (value < 0)
         return constrain(-value + 1049, 1001, 2000);
     return 48;
 }
