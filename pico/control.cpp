@@ -102,9 +102,9 @@ void control::stbUpdate() {
         u_smooth[i] = beta * u[i] + (1 - beta) * u_smooth[i];
     }
 
-    throttle.VL = clampDSHOT(u_smooth[0] * 150);
-    throttle.VR = clampDSHOT(u_smooth[1] * 150);
-    throttle.VB = clampDSHOT(u_smooth[2] * 150);
+    throttle.VL = clampDSHOT((u_smooth[0] * 150) + state.z);      //z is being adjusted in nav loop
+    throttle.VR = clampDSHOT((u_smooth[1] * 150) + state.z);
+    throttle.VB = clampDSHOT((u_smooth[2] * 150) + state.z);
     // printf("%d      %d      %d\n", throttle.VL, throttle.VR, throttle.VB);
 }
 
@@ -128,6 +128,7 @@ void control::navUpdate()
 
     throttle.HL = clampDSHOT((ux - uyaw) * 100);
     throttle.HR = clampDSHOT((ux + uyaw) * 100);
+    state.z = uz;
     // float t1 = ux - uyaw;
     // float t2 = ux + uyaw;
     // float t3 = uz + uy;
