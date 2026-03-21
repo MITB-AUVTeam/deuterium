@@ -111,9 +111,10 @@ void control::stbUpdate() {
 void control::navUpdate()
 {
 
-    if (abs(state.dx) < 0.05) state.dx = 0;
-    if (abs(state.dy) < 0.05) state.dy = 0;
-    if (abs(state.dz) < 0.05) state.dz = 0;
+    // if (abs(state.dx) < 0.05) state.dx = 0;
+    // if (abs(state.dy) < 0.05) state.dy = 0;
+    // if (abs(state.dz) < 0.05) state.dz = 0;
+    // deadbands and angle warp can be applied in mpu ???
 
     float ux = computePID(pidx, state.dx, dt);
     float uy = computePID(pidy, state.dy, dt);
@@ -125,6 +126,8 @@ void control::navUpdate()
     uz = constrain(uz, -300, 300);
     uyaw = constrain(uyaw, -200, 200);
 
+    throttle.HL = clampDSHOT((ux - uyaw) * 100);
+    throttle.HR = clampDSHOT((ux + uyaw) * 100);
     // float t1 = ux - uyaw;
     // float t2 = ux + uyaw;
     // float t3 = uz + uy;
