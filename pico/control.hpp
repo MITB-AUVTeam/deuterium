@@ -4,9 +4,14 @@
 #include <algorithm>
 #pragma once
 #include "structs.hpp"
+#include "config.hpp"
 
 class control {
 public:
 
-    static void update();
+    static void stbUpdate();
+
+    static void navUpdate();
+
+    static void navStop();
 };

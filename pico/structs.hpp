@@ -2,8 +2,9 @@
 #pragma once
 
 typedef struct {
-    float roll, pitch, yaw;
+    float roll, pitch;
     float wx, wy, wz;
+    float dx, dy, dz, dyaw;
 } State;
 
 typedef struct {

@@ -1,9 +1,5 @@
-#include "config.hpp"
 #include "imu.hpp"
-#include "structs.hpp"
 
-#define I2C_PORT i2c1
-static int addr = 0x28;
 
 extern State state;
 
@@ -27,19 +23,19 @@ uint8_t buffer[6];
 
 void imu::init() {
 
-    i2c_init(I2C_PORT, 400 * 1000);
-    gpio_set_function(27, GPIO_FUNC_I2C);
-    gpio_set_function(26, GPIO_FUNC_I2C);
-    gpio_pull_up(27);
-    gpio_pull_up(26);
+    i2c_init(BNO055_PORT, 400 * 1000);
+    gpio_set_function(BNO055_SDA, GPIO_FUNC_I2C);
+    gpio_set_function(BNO055_SCL, GPIO_FUNC_I2C);
+    gpio_pull_up(BNO055_SDA);
+    gpio_pull_up(BNO055_SCL);
 
     uint8_t reg = 0x00;
     uint8_t chipID = 0;
 
     while (chipID != 0xA0) {
         printf("BNO055 not connected\n");
-        i2c_write_blocking(I2C_PORT, addr, &reg, 1, true);
-        i2c_read_blocking(I2C_PORT, addr, &chipID, 1, false);
+        i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg, 1, true);
+        i2c_read_blocking(BNO055_PORT, BNO055_ADDR, &chipID, 1, false);
         sleep_ms(500);
     }
 
@@ -50,28 +46,28 @@ void imu::init() {
 
     data[0] = 0x3D;     // OPR_MODE
     data[1] = 0x00;     // CONFIG mode
-    i2c_write_blocking(I2C_PORT, addr, data, 2, false);
+    i2c_write_blocking(BNO055_PORT, BNO055_ADDR, data, 2, false);
     sleep_ms(50);
 
     data[0] = 0x3F;     // SYS_TRIGGER
     data[1] = 0x40;     // internal oscillator
-    i2c_write_blocking(I2C_PORT, addr, data, 2, false);
+    i2c_write_blocking(BNO055_PORT, BNO055_ADDR, data, 2, false);
     sleep_ms(50);
 
     data[0] = 0x3B;     // UNIT_SEL
     data[1] = 0x06;     // gyro in rad/s
-    i2c_write_blocking(I2C_PORT, addr, data, 2, false);
+    i2c_write_blocking(BNO055_PORT, BNO055_ADDR, data, 2, false);
     sleep_ms(50);
 
     data[0] = 0x3D;     // OPR_MODE
     data[1] = 0x08;     // IMU
-    i2c_write_blocking(I2C_PORT, addr, data, 2, false);
+    i2c_write_blocking(BNO055_PORT, BNO055_ADDR, data, 2, false);
     sleep_ms(500);
 
     // read roll and pitch for lock values
     uint8_t reg_euler = 0x1A;
-    i2c_write_blocking(I2C_PORT, addr, &reg_euler, 1, true);
-    i2c_read_blocking(I2C_PORT, addr, buffer, 6, false);
+    i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg_euler, 1, true);
+    i2c_read_blocking(BNO055_PORT, BNO055_ADDR, buffer, 6, false);
     int16_t raw_roll0 = (int16_t)((buffer[3] << 8) | buffer[2]);
     int16_t raw_pitch0 = (int16_t)((buffer[5] << 8) | buffer[4]);
     int16_t raw_yaw0 = (int16_t)((buffer[1] << 8) | buffer[0]);
@@ -84,8 +80,8 @@ void imu::init() {
 void imu::update() {
 
     uint8_t reg_euler = 0x1A;
-    i2c_write_blocking(I2C_PORT, addr, &reg_euler, 1, true);
-    i2c_read_blocking(I2C_PORT, addr, buffer, 6, false);
+    i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg_euler, 1, true);
+    i2c_read_blocking(BNO055_PORT, BNO055_ADDR, buffer, 6, false);
     int16_t raw_roll = (int16_t)((buffer[3] << 8) | buffer[2]);
     int16_t raw_pitch = (int16_t)((buffer[5] << 8) | buffer[4]);
     int16_t raw_yaw = (int16_t)((buffer[1] << 8) | buffer[0]);
@@ -100,8 +96,8 @@ void imu::update() {
     if (std::abs(state.pitch) < 0.05f) state.pitch = 0;
 
     uint8_t reg_gyro = 0x14;
-    i2c_write_blocking(I2C_PORT, addr, &reg_gyro, 1, true);
-    i2c_read_blocking(I2C_PORT, addr, buffer, 6, false);
+    i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg_gyro, 1, true);
+    i2c_read_blocking(BNO055_PORT, BNO055_ADDR, buffer, 6, false);
     int16_t raw_wx = (int16_t)((buffer[1] << 8) | buffer[0]);
     int16_t raw_wy = (int16_t)((buffer[3] << 8) | buffer[2]);
     int16_t raw_wz = (int16_t)((buffer[5] << 8) | buffer[4]);

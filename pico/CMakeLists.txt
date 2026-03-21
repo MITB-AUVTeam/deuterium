@@ -39,6 +39,8 @@ add_executable(pico
     pico.cpp     
     imu.cpp
     control.cpp
+    esc.cpp
+    raspi.cpp
     )
 
 pico_set_program_name(pico "pico")
