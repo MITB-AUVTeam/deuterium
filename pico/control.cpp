@@ -15,7 +15,7 @@ struct PID {
 PID pidx = { 1.2, 0.01, 0.25, 0, 0 };
 PID pidy = { 1.2, 0.01, 0.25, 0, 0 };
 PID pidz = { 1.5, 0.02, 0.3, 0, 0 };
-PID pidyaw = { 2.5, 0.01, 0.3, 0, 0 };                      //need to unify this with stb loop. currently bieng used by nav loop only
+PID pidyaw = { 2.5, 0.01, 0.3, 0, 0 };                           //need to unify this with stb loop. currently bieng used by nav loop only
 
 //stabalization
 const float stb_dt = STB_LOOP_MS / 1000;
@@ -51,7 +51,7 @@ float computePID(PID& p, float error, float dt)
     if (dt <= 0) return 0;
 
     p.integral += error * dt;
-    p.integral = constrain(p.integral, -100, 100);
+    p.integral = constrain(p.integral, -100, 100);                      //integrator windup?
 
     float derivative = (error - p.prev) / dt;
 
@@ -102,7 +102,7 @@ void control::stbUpdate() {
         u_smooth[i] = beta * u[i] + (1 - beta) * u_smooth[i];
     }
 
-    throttle.VL = clampDSHOT((u_smooth[0] * 150) + state.z);      //z is being adjusted in nav loop
+    throttle.VL = clampDSHOT((u_smooth[0] * 150) + state.z);   //z is being adjusted in nav loop
     throttle.VR = clampDSHOT((u_smooth[1] * 150) + state.z);
     throttle.VB = clampDSHOT((u_smooth[2] * 150) + state.z);
     // printf("%d      %d      %d\n", throttle.VL, throttle.VR, throttle.VB);
@@ -113,8 +113,7 @@ void control::navUpdate(float nav_dt)
 
     // if (abs(state.dx) < 0.05) state.dx = 0;
     // if (abs(state.dy) < 0.05) state.dy = 0;
-    // if (abs(state.dz) < 0.05) state.dz = 0;
-    // deadbands and angle warp can be applied in mpu ???
+    // if (abs(state.dz) < 0.05) state.dz = 0;                               // deadbands and angle warp can be applied in mpu ???
 
     float ux = computePID(pidx, state.dx, nav_dt);
     float uy = computePID(pidy, state.dy, nav_dt);
@@ -130,11 +129,6 @@ void control::navUpdate(float nav_dt)
     throttle.HR = clampDSHOT((ux + uyaw) * 100);
     state.z = uz;
     state.ref_roll = uy;
-    // float t1 = ux - uyaw;
-    // float t2 = ux + uyaw;
-    // float t3 = uz + uy;
-    // float t4 = uz - uy;
-    // float t5 = uz;
 
 }
 
