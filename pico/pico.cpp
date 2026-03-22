@@ -16,7 +16,9 @@
 volatile bool stb_flag = false;
 bool nav_data_flag = false;
 bool nav_time_out = true;       //starts is safe consdition
+
 absolute_time_t last_nav_data_time = get_absolute_time();
+absolute_time_t new_nav_data_time = get_absolute_time();
 
 struct repeating_timer control_timer;
 
@@ -66,9 +68,11 @@ int main(void) {
         nav_data_flag = raspi::update();
 
         if (nav_data_flag) {
-            last_nav_data_time = get_absolute_time();
+            new_nav_data_time = get_absolute_time();
+            float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
+            last_nav_data_time = new_nav_data_time;
             nav_time_out = false;
-            control::navUpdate();
+            control::navUpdate(nav_dt);
         }
         if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
             control::navStop();

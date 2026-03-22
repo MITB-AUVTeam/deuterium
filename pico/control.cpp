@@ -18,7 +18,7 @@ PID pidz = { 1.5, 0.02, 0.3, 0, 0 };
 PID pidyaw = { 2.5, 0.01, 0.3, 0, 0 };                      //need to unify this with stb loop. currently bieng used by nav loop only
 
 //stabalization
-const float dt = STB_LOOP_MS / 1000;
+const float stb_dt = STB_LOOP_MS / 1000;
 //outer loop PID
 float Kp_ang = 5.0;
 float Ki_ang = 1.0;
@@ -66,8 +66,8 @@ float computePID(PID& p, float error, float dt)
 
 void control::stbUpdate() {
 
-    rollInt += state.roll * dt;
-    pitchInt += state.pitch * dt;
+    rollInt += state.roll * stb_dt;
+    pitchInt += state.pitch * stb_dt;
 
     // Limit integrator to prevent windup
     rollInt = constrain(rollInt, -0.02, 0.02);
@@ -108,7 +108,7 @@ void control::stbUpdate() {
     // printf("%d      %d      %d\n", throttle.VL, throttle.VR, throttle.VB);
 }
 
-void control::navUpdate()
+void control::navUpdate(float nav_dt)
 {
 
     // if (abs(state.dx) < 0.05) state.dx = 0;
@@ -116,10 +116,10 @@ void control::navUpdate()
     // if (abs(state.dz) < 0.05) state.dz = 0;
     // deadbands and angle warp can be applied in mpu ???
 
-    float ux = computePID(pidx, state.dx, dt);
-    float uy = computePID(pidy, state.dy, dt);
-    float uz = computePID(pidz, state.dz, dt);
-    float uyaw = computePID(pidyaw, state.dyaw, dt);
+    float ux = computePID(pidx, state.dx, nav_dt);
+    float uy = computePID(pidy, state.dy, nav_dt);
+    float uz = computePID(pidz, state.dz, nav_dt);
+    float uyaw = computePID(pidyaw, state.dyaw, nav_dt);
 
     ux = constrain(ux, -300, 300);
     uy = constrain(uy, -300, 300);
