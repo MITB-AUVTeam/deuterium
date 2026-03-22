@@ -4,26 +4,27 @@
 extern State state;
 extern Throttle throttle;
 
-//navigation
 struct PID {
     float kp;
     float ki;
     float kd;
+    float windup;
     float prev;
     float integral;
 };
-PID pidx = { 1.2, 0.01, 0.25, 0, 0 };
-PID pidy = { 1.2, 0.01, 0.25, 0, 0 };
-PID pidz = { 1.5, 0.02, 0.3, 0, 0 };
-PID pidyaw = { 2.5, 0.01, 0.3, 0, 0 };                           //need to unify this with stb loop. currently bieng used by nav loop only
+
+
+//navigation
+PID pidx = { 1.2, 0.01, 0.25, 100, 0, 0 };
+PID pidy = { 1.2, 0.01, 0.25, 100, 0, 0 };
+PID pidz = { 1.5, 0.02, 0.3, 100, 0, 0 };
+PID pidyaw = { 2.5, 0.01, 0.3, 100, 0, 0 };
+
 
 //stabalization
-const float stb_dt = STB_LOOP_MS / 1000;
-//outer loop PID
-float Kp_ang = 5.0;
-float Ki_ang = 1.0;
-float rollInt = 0;
-float pitchInt = 0;
+PID pidroll = { 5.0, 1.0, 0, 0.02, 0, 0 };
+PID pidpitch = { 5.0, 1.0, 0, 0.02, 0, 0 };
+const float stb_dt = STB_LOOP_MS / 1000.0f;
 //inner loop LQR
 float K_lqr[3][2] = {
   { 1.5, -1},
@@ -33,6 +34,7 @@ float K_lqr[3][2] = {
 const float U_MAX = 1.0;
 float u_smooth[3] = { 0, 0, 0 };
 const float beta = 0.2; // LQR output smoothing factor
+
 
 static inline float constrain(float v, float lo, float hi) {
     return (v < lo) ? lo : (v > hi) ? hi : v;
@@ -51,7 +53,7 @@ float computePID(PID& p, float error, float dt)
     if (dt <= 0) return 0;
 
     p.integral += error * dt;
-    p.integral = constrain(p.integral, -100, 100);                      //integrator windup?
+    p.integral = constrain(p.integral, -p.windup, p.windup);
 
     float derivative = (error - p.prev) / dt;
 
@@ -64,17 +66,11 @@ float computePID(PID& p, float error, float dt)
     return output;
 }
 
+
 void control::stbUpdate() {
 
-    rollInt += state.roll * stb_dt;
-    pitchInt += state.pitch * stb_dt;
-
-    // Limit integrator to prevent windup
-    rollInt = constrain(rollInt, -0.02, 0.02);
-    pitchInt = constrain(pitchInt, -0.02, 0.02);
-
-    float wx_ref = Kp_ang * state.roll + Ki_ang * rollInt;
-    float wy_ref = Kp_ang * state.pitch + Ki_ang * pitchInt;
+    float wx_ref = computePID(pidroll, state.roll, stb_dt);
+    float wy_ref = computePID(pidpitch, state.pitch, stb_dt);
 
     //inner loop LQR
     float omega_err[2] = { state.wx - wx_ref, state.wy - wy_ref };
