@@ -15,7 +15,7 @@ struct PID {
 PID pidx = { 1.2, 0.01, 0.25, 0, 0 };
 PID pidy = { 1.2, 0.01, 0.25, 0, 0 };
 PID pidz = { 1.5, 0.02, 0.3, 0, 0 };
-PID pidyaw = { 2.5, 0.01, 0.3, 0, 0 };
+PID pidyaw = { 2.5, 0.01, 0.3, 0, 0 };                      //need to unify this with stb loop. currently bieng used by nav loop only
 
 //stabalization
 const float dt = STB_LOOP_MS / 1000;

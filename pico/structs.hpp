@@ -1,13 +1,26 @@
 #include <stdint.h>
 #pragma once
 
-typedef struct {
+struct State {
     float roll, pitch, z;
+    float ref_roll;
     float wx, wy, wz;
     float dx, dy, dz, dyaw;
-} State;
 
-typedef struct {
+    State() {
+        roll = pitch = z = 0;
+        ref_roll = 0;
+        wx = wy = wz = 0;
+        dx = dy = dz = dyaw = 0;
+    }
+};
+
+struct Throttle {
     uint16_t VB, VR, VL, HR, HL;
     int zoffset;
-} Throttle;
+
+    Throttle() {
+        VB = VR = VL = HR = HL = 0;
+        zoffset = 0;
+    }
+};

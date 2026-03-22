@@ -27,7 +27,7 @@ bool control_timer_cb(struct repeating_timer* t)
 }
 
 State state;
-Throttle throttle = { 0, 0, 0, 0, 0, 0 };
+Throttle throttle;
 
 int main(void) {
 
