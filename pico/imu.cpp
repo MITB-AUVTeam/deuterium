@@ -88,7 +88,7 @@ void imu::update() {
     state.roll = (raw_roll / 900.0f);
     state.pitch = (raw_pitch / 900.0f);
 
-    state.roll = wrapAngle(state.roll - roll0);
+    state.roll = wrapAngle(state.roll - (roll0 + state.ref_roll));
     state.pitch = wrapAngle(state.pitch - pitch0);
 
     // Deadband for small angles

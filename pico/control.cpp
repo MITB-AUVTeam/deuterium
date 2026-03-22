@@ -129,6 +129,7 @@ void control::navUpdate()
     throttle.HL = clampDSHOT((ux - uyaw) * 100);
     throttle.HR = clampDSHOT((ux + uyaw) * 100);
     state.z = uz;
+    state.ref_roll = uy;
     // float t1 = ux - uyaw;
     // float t2 = ux + uyaw;
     // float t3 = uz + uy;
