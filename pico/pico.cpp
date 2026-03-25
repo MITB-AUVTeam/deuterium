@@ -57,7 +57,7 @@ int main(void) {
         &control_timer
     );
 
-    while (1) {
+    for (;;) {
 
         if (stb_flag) {
             stb_flag = false;
