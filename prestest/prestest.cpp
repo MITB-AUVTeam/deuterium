@@ -171,12 +171,12 @@ void calculate() {
         P = (((D1_pres * SENS2) / 2097152l - OFF2) / 8192l);
     }
 }
-float pressure() {
+float pressure(float conversion) {
     if (_model == MS5837_02BA) {
-        return P / 100.0f;
+        return P * conversion / 100.0f;
     }
     else {
-        return P / 10.0f;
+        return P * conversion / 10.0f;
     }
 }
 
@@ -230,9 +230,10 @@ int main() {
 
     for (;;) {
         read();
-        float p = pressure();
+        float p = pressure(1.0f);
         float t = temperature();
-        printf("%f      %f\n", p, t);
+        float d = depth();
+        printf("%f      %f      %f\n", p, t, d);
         sleep_ms(100);
     }
 
