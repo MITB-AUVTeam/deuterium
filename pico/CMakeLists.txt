@@ -41,6 +41,7 @@ add_executable(pico
     control.cpp
     esc.cpp
     raspi.cpp
+    depth.cpp
     )
 
 pico_set_program_name(pico "pico")

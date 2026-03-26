@@ -12,6 +12,11 @@
 #define BNO055_SDA  27
 #define BNO055_SCL  26
 
+//MS5837
+#define MS5837_PORT i2c0
+#define MS5837_SDA 28
+#define MS5837_SCL 29
+
 //PIO of ESC
 #define PIO_VB 5
 #define PIO_VR 6
