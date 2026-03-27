@@ -1,5 +1,4 @@
 #include "control.hpp"
-#include "structs.hpp"
 
 extern State state;
 extern Throttle throttle;
@@ -98,14 +97,13 @@ void control::stbUpdate() {
         u_smooth[i] = beta * u[i] + (1 - beta) * u_smooth[i];
     }
 
-    throttle.VL = clampDSHOT((u_smooth[0] * 150) + state.z);   //z is being adjusted in nav loop. incomplete code 
-    throttle.VR = clampDSHOT((u_smooth[1] * 150) + state.z);
-    throttle.VB = clampDSHOT((u_smooth[2] * 150) + state.z);
+    throttle.VL = clampDSHOT((u_smooth[0] * 150));
+    throttle.VR = clampDSHOT((u_smooth[1] * 150));
+    throttle.VB = clampDSHOT((u_smooth[2] * 150));
     // printf("%d      %d      %d\n", throttle.VL, throttle.VR, throttle.VB);
 }
 
-void control::navUpdate(float nav_dt)
-{
+void control::navUpdate(float nav_dt) {
 
     // if (abs(state.dx) < 0.05) state.dx = 0;
     // if (abs(state.dy) < 0.05) state.dy = 0;
