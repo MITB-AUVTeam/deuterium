@@ -14,6 +14,7 @@
 
 //MS5837
 #define MS5837_PORT i2c0
+#define MS5837_ADDR 0x76
 #define MS5837_SDA 28
 #define MS5837_SCL 29
 

@@ -1,10 +1,6 @@
 #include "depth.hpp"
 
-#include <stdio.h>
-#include "pico/stdlib.h"
-#include "hardware/i2c.h"
-
-#define I2C_ADDR 0x76
+extern State state;
 
 const uint8_t MS5837_RESET = 0x1E;
 const uint8_t MS5837_ADC_READ = 0x00;
@@ -57,7 +53,7 @@ uint8_t crc4(uint16_t n_prom[]) {
     return (n_rem >> 12) & 0xF;
 }
 
-bool init() {
+void depth::init() {
 
     bool crc_check = 0;
 
@@ -69,14 +65,14 @@ bool init() {
 
     do {
         uint8_t cmd = MS5837_RESET;
-        i2c_write_blocking(MS5837_PORT, I2C_ADDR, &cmd, 1, false);
+        i2c_write_blocking(MS5837_PORT, MS5837_ADDR, &cmd, 1, false);
         sleep_ms(500);
 
         for (uint8_t i = 0; i < 7; i++) {
             uint8_t reg = MS5837_PROM_READ + i * 2;
-            i2c_write_blocking(MS5837_PORT, I2C_ADDR, &reg, 1, true);
+            i2c_write_blocking(MS5837_PORT, MS5837_ADDR, &reg, 1, true);
             uint8_t buffer[2];
-            i2c_read_blocking(MS5837_PORT, I2C_ADDR, buffer, 2, false);
+            i2c_read_blocking(MS5837_PORT, MS5837_ADDR, buffer, 2, false);
 
             C[i] = (buffer[0] << 8) | buffer[1];
         }
@@ -85,7 +81,11 @@ bool init() {
 
         crc_check = crc_calculated == crc_read;
 
+        printf("MS5837 not connected");
+
     } while (!crc_check);
+
+    printf("MS5837 connected");
 
     if (C[1] < MS5837_30BA_MIN_SENSITIVITY || C[1] > MS5837_02BA_MAX_SENSITIVITY)
     {
@@ -99,5 +99,115 @@ bool init() {
     {
         _model = MS5837_30BA;
     }
-    return true;
 }
+
+float pressure(float conversion) {
+    if (_model == MS5837_02BA) {
+        return P * conversion / 100.0f;
+    }
+    else {
+        return P * conversion / 10.0f;
+    }
+}
+
+float temperature() {
+    return TEMP / 100.0f;
+}
+
+void depth() {
+    state.z = (pressure(Pa) - 101300) / (fluidDensity * 9.80665);
+}
+
+void depth::update() {
+
+    uint8_t reg;
+    uint8_t buffer[3];
+
+    reg = MS5837_CONVERT_D1_8192;
+    i2c_write_blocking(MS5837_PORT, MS5837_ADDR, &reg, 1, false);
+    sleep_ms(20);
+
+    reg = MS5837_ADC_READ;
+    i2c_write_blocking(MS5837_PORT, MS5837_ADDR, &reg, 1, false);
+
+    i2c_read_blocking(MS5837_PORT, MS5837_ADDR, buffer, 3, false);
+    D1_pres = buffer[0] << 16 | buffer[1] << 8 | buffer[2];
+
+
+
+    reg = MS5837_CONVERT_D2_8192;
+    i2c_write_blocking(MS5837_PORT, MS5837_ADDR, &reg, 1, false);
+    sleep_ms(20);
+
+    reg = MS5837_ADC_READ;
+    i2c_write_blocking(MS5837_PORT, MS5837_ADDR, &reg, 1, false);
+
+    i2c_read_blocking(MS5837_PORT, MS5837_ADDR, buffer, 3, false);
+    D2_temp = buffer[0] << 16 | buffer[1] << 8 | buffer[2];
+
+    int32_t dT = 0;
+    int64_t SENS = 0;
+    int64_t OFF = 0;
+    int32_t SENSi = 0;
+    int32_t OFFi = 0;
+    int32_t Ti = 0;
+    int64_t OFF2 = 0;
+    int64_t SENS2 = 0;
+
+    // Terms called
+    dT = D2_temp - uint32_t(C[5]) * 256l;
+    if (_model == MS5837_02BA) {
+        SENS = int64_t(C[1]) * 65536l + (int64_t(C[3]) * dT) / 128l;
+        OFF = int64_t(C[2]) * 131072l + (int64_t(C[4]) * dT) / 64l;
+        P = (D1_pres * SENS / (2097152l) - OFF) / (32768l);
+    }
+    else {
+        SENS = int64_t(C[1]) * 32768l + (int64_t(C[3]) * dT) / 256l;
+        OFF = int64_t(C[2]) * 65536l + (int64_t(C[4]) * dT) / 128l;
+        P = (D1_pres * SENS / (2097152l) - OFF) / (8192l);
+    }
+
+    // Temp conversion
+    TEMP = 2000l + int64_t(dT) * C[6] / 8388608LL;
+
+    //Second order compensation
+    if (_model == MS5837_02BA) {
+        if ((TEMP / 100) < 20) {         //Low temp
+            Ti = (11 * int64_t(dT) * int64_t(dT)) / (34359738368LL);
+            OFFi = (31 * (TEMP - 2000) * (TEMP - 2000)) / 8;
+            SENSi = (63 * (TEMP - 2000) * (TEMP - 2000)) / 32;
+        }
+    }
+    else {
+        if ((TEMP / 100) < 20) {         //Low temp
+            Ti = (3 * int64_t(dT) * int64_t(dT)) / (8589934592LL);
+            OFFi = (3 * (TEMP - 2000) * (TEMP - 2000)) / 2;
+            SENSi = (5 * (TEMP - 2000) * (TEMP - 2000)) / 8;
+            if ((TEMP / 100) < -15) {    //Very low temp
+                OFFi = OFFi + 7 * (TEMP + 1500l) * (TEMP + 1500l);
+                SENSi = SENSi + 4 * (TEMP + 1500l) * (TEMP + 1500l);
+            }
+        }
+        else if ((TEMP / 100) >= 20) {    //High temp
+            Ti = 2 * (dT * dT) / (137438953472LL);
+            OFFi = (1 * (TEMP - 2000) * (TEMP - 2000)) / 16;
+            SENSi = 0;
+        }
+    }
+
+    OFF2 = OFF - OFFi;           //Calculate pressure and temp second order
+    SENS2 = SENS - SENSi;
+
+    TEMP = (TEMP - Ti);
+
+    if (_model == MS5837_02BA) {
+        P = (((D1_pres * SENS2) / 2097152l - OFF2) / 32768l);
+    }
+    else {
+        P = (((D1_pres * SENS2) / 2097152l - OFF2) / 8192l);
+    }
+
+    depth();
+
+}
+

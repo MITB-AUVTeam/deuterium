@@ -12,6 +12,7 @@
 #include "control.hpp"
 #include "esc.hpp"
 #include "raspi.hpp"
+#include "depth.hpp"
 
 volatile bool stb_flag = false;
 bool nav_data_flag = false;
@@ -43,6 +44,7 @@ int main(void) {
     printf("program initiating\n");
 
     imu::init();
+    depth::init();
     esc::pio_init();
     esc::arm();
     esc::mode3d();
@@ -62,6 +64,7 @@ int main(void) {
         if (stb_flag) {
             stb_flag = false;
             imu::update();
+            depth::update();
             control::stbUpdate();
         }
 
