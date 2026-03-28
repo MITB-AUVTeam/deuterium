@@ -6,9 +6,11 @@
 #pragma once
 
 
-class depth {
+class presens {
 public:
-    static void init();
+    static bool init();
 
-    static void update();
+    static void read();
+
+    static float depth();
 };

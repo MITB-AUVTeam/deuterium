@@ -12,7 +12,7 @@
 #include "control.hpp"
 #include "esc.hpp"
 #include "raspi.hpp"
-#include "depth.hpp"
+#include "pressure.hpp"
 
 volatile bool stb_flag = false;
 bool nav_data_flag = false;
@@ -43,9 +43,13 @@ int main(void) {
     sleep_ms(5000);
     printf("program initiating\n");
 
-    imu::init();
-    depth::init();
+    // imu::init();
+
+    bool test = presens::init();
+    printf("%d\n", test);
+
     esc::pio_init();
+
     esc::arm();
     esc::mode3d();
     raspi::init();
@@ -63,24 +67,26 @@ int main(void) {
 
         if (stb_flag) {
             stb_flag = false;
-            imu::update();
-            depth::update();
-            control::stbUpdate();
+            // imu::update();
+            presens::read();
+            printf("%f\n", presens::depth());
+            // control::stbUpdate();
         }
 
-        nav_data_flag = raspi::update();
 
-        if (nav_data_flag) {
-            new_nav_data_time = get_absolute_time();
-            float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
-            last_nav_data_time = new_nav_data_time;
-            nav_time_out = false;
-            control::navUpdate(nav_dt);
-        }
-        if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
-            control::navStop();
-            nav_time_out = true;
-        }
+        // nav_data_flag = raspi::update();
+
+        // if (nav_data_flag) {
+        //     new_nav_data_time = get_absolute_time();
+        //     float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
+        //     last_nav_data_time = new_nav_data_time;
+        //     nav_time_out = false;
+        //     control::navUpdate(nav_dt);
+        // }
+        // if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
+        //     control::navStop();
+        //     nav_time_out = true;
+        // }
 
         // printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
 

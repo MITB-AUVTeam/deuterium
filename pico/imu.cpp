@@ -114,5 +114,5 @@ void imu::update() {
     wy_filt_last = state.wy;
     wz_filt_last = state.wz;
 
-    // printf("%f      %f      %f      %f      %f\n", state.roll, state.pitch, state.wx, state.wy, state.wz);
+    printf("%f      %f      %f      %f      %f\n", state.roll, state.pitch, state.wx, state.wy, state.wz);
 }

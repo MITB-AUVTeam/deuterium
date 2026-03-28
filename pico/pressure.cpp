@@ -1,6 +1,13 @@
-#include "depth.hpp"
+#include "pressure.hpp"
 
-extern State state;
+// I2C defines
+// This example will use I2C0 on GPIO8 (SDA) and GPIO9 (SCL) running at 400KHz.
+// Pins can be changed, see the GPIO function select table in the datasheet for information on GPIO assignments
+#define I2C_PORT i2c0
+#define I2C_SDA 28
+#define I2C_SCL 29
+
+#define I2C_ADDR 0x76
 
 const uint8_t MS5837_RESET = 0x1E;
 const uint8_t MS5837_ADC_READ = 0x00;
@@ -16,6 +23,7 @@ const uint8_t MS5837_30BA = 0;
 const uint8_t MS5837_02BA = 1;
 const uint8_t MS5837_UNRECOGNISED = 255;
 
+// context: https://github.com/ArduPilot/ardupilot/pull/29122#issuecomment-2877269114
 const uint16_t MS5837_02BA_MAX_SENSITIVITY = 49000;
 const uint16_t MS5837_02BA_30BA_SEPARATION = 37000;
 const uint16_t MS5837_30BA_MIN_SENSITIVITY = 26000;
@@ -53,40 +61,34 @@ uint8_t crc4(uint16_t n_prom[]) {
     return (n_rem >> 12) & 0xF;
 }
 
-void depth::init() {
+bool presens::init() {
 
-    bool crc_check = 0;
+    i2c_init(I2C_PORT, 400 * 1000);
 
-    i2c_init(MS5837_PORT, 400 * 1000);
-    gpio_set_function(MS5837_SDA, GPIO_FUNC_I2C);
-    gpio_set_function(MS5837_SCL, GPIO_FUNC_I2C);
-    gpio_pull_up(MS5837_SDA);
-    gpio_pull_up(MS5837_SCL);
+    gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
+    gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
+    gpio_pull_up(I2C_SDA);
+    gpio_pull_up(I2C_SCL);
 
-    do {
-        uint8_t cmd = MS5837_RESET;
-        i2c_write_blocking(MS5837_PORT, MS5837_ADDR, &cmd, 1, false);
-        sleep_ms(500);
+    uint8_t cmd = MS5837_RESET;
+    i2c_write_blocking(I2C_PORT, I2C_ADDR, &cmd, 1, false);
+    sleep_ms(500);
 
-        for (uint8_t i = 0; i < 7; i++) {
-            uint8_t reg = MS5837_PROM_READ + i * 2;
-            i2c_write_blocking(MS5837_PORT, MS5837_ADDR, &reg, 1, true);
-            uint8_t buffer[2];
-            i2c_read_blocking(MS5837_PORT, MS5837_ADDR, buffer, 2, false);
+    for (uint8_t i = 0; i < 7; i++) {
+        uint8_t reg = MS5837_PROM_READ + i * 2;
+        i2c_write_blocking(I2C_PORT, I2C_ADDR, &reg, 1, true);
+        uint8_t buffer[2];
+        i2c_read_blocking(I2C_PORT, I2C_ADDR, buffer, 2, false);
 
-            C[i] = (buffer[0] << 8) | buffer[1];
-        }
-        uint8_t crc_read = C[0] >> 12;
-        uint8_t crc_calculated = crc4(&C[0]);
+        C[i] = (buffer[0] << 8) | buffer[1];
+    }
 
-        crc_check = crc_calculated == crc_read;
+    uint8_t crcRead = C[0] >> 12;
+    uint8_t crcCalculated = crc4(&C[0]);
 
-        printf("MS5837 not connected");
-
-    } while (!crc_check);
-
-    printf("MS5837 connected");
-
+    if (crcCalculated != crcRead) {
+        return false;
+    }
     if (C[1] < MS5837_30BA_MIN_SENSITIVITY || C[1] > MS5837_02BA_MAX_SENSITIVITY)
     {
         _model = MS5837_UNRECOGNISED;
@@ -99,51 +101,12 @@ void depth::init() {
     {
         _model = MS5837_30BA;
     }
+    printf("MS5837 connected\n");
+    return true;
 }
-
-float pressure(float conversion) {
-    if (_model == MS5837_02BA) {
-        return P * conversion / 100.0f;
-    }
-    else {
-        return P * conversion / 10.0f;
-    }
-}
-
-float temperature() {
-    return TEMP / 100.0f;
-}
-
-void depth() {
-    state.z = (pressure(Pa) - 101300) / (fluidDensity * 9.80665);
-}
-
-void depth::update() {
-
-    uint8_t reg;
-    uint8_t buffer[3];
-
-    reg = MS5837_CONVERT_D1_8192;
-    i2c_write_blocking(MS5837_PORT, MS5837_ADDR, &reg, 1, false);
-    sleep_ms(20);
-
-    reg = MS5837_ADC_READ;
-    i2c_write_blocking(MS5837_PORT, MS5837_ADDR, &reg, 1, false);
-
-    i2c_read_blocking(MS5837_PORT, MS5837_ADDR, buffer, 3, false);
-    D1_pres = buffer[0] << 16 | buffer[1] << 8 | buffer[2];
-
-
-
-    reg = MS5837_CONVERT_D2_8192;
-    i2c_write_blocking(MS5837_PORT, MS5837_ADDR, &reg, 1, false);
-    sleep_ms(20);
-
-    reg = MS5837_ADC_READ;
-    i2c_write_blocking(MS5837_PORT, MS5837_ADDR, &reg, 1, false);
-
-    i2c_read_blocking(MS5837_PORT, MS5837_ADDR, buffer, 3, false);
-    D2_temp = buffer[0] << 16 | buffer[1] << 8 | buffer[2];
+void calculate() {
+    // Given C1-C6 and D1, D2, calculated TEMP and P
+    // Do conversion first and then second order temp compensation
 
     int32_t dT = 0;
     int64_t SENS = 0;
@@ -206,8 +169,50 @@ void depth::update() {
     else {
         P = (((D1_pres * SENS2) / 2097152l - OFF2) / 8192l);
     }
-
-    depth();
-
+}
+float pressure(float conversion) {
+    if (_model == MS5837_02BA) {
+        return P * conversion / 100.0f;
+    }
+    else {
+        return P * conversion / 10.0f;
+    }
 }
 
+float temperature() {
+    return TEMP / 100.0f;
+}
+
+float presens::depth() {
+    return (pressure(Pa) - 101300) / (fluidDensity * 9.80665);
+}
+
+void presens::read() {
+
+    uint8_t reg;
+    uint8_t buffer[3];
+
+    reg = MS5837_CONVERT_D1_8192;
+    i2c_write_blocking(I2C_PORT, I2C_ADDR, &reg, 1, false);
+    sleep_ms(20);
+
+    reg = MS5837_ADC_READ;
+    i2c_write_blocking(I2C_PORT, I2C_ADDR, &reg, 1, false);
+
+    i2c_read_blocking(I2C_PORT, I2C_ADDR, buffer, 3, false);
+    D1_pres = buffer[0] << 16 | buffer[1] << 8 | buffer[2];
+
+
+
+    reg = MS5837_CONVERT_D2_8192;
+    i2c_write_blocking(I2C_PORT, I2C_ADDR, &reg, 1, false);
+    sleep_ms(20);
+
+    reg = MS5837_ADC_READ;
+    i2c_write_blocking(I2C_PORT, I2C_ADDR, &reg, 1, false);
+
+    i2c_read_blocking(I2C_PORT, I2C_ADDR, buffer, 3, false);
+    D2_temp = buffer[0] << 16 | buffer[1] << 8 | buffer[2];
+
+    calculate();
+}
