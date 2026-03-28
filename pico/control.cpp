@@ -116,7 +116,7 @@ void control::stbUpdate() {
     float Fz_pid = computePID(pid_z, z_error);
     float Fz = Fz_eq + Fz_pid;
 
-    printf("%f      %f      %f      ", tau_phi, tau_theta, Fz);
+    // printf("%f      %f      %f      ", tau_phi, tau_theta, Fz);
 
     // ---------- XtoF MIXING ----------
 
@@ -129,7 +129,7 @@ void control::stbUpdate() {
     F2 = constrain(F2, F_MIN, F_MAX);
     F3 = constrain(F3, F_MIN, F_MAX);
 
-    printf("%f      %f      %f\n", F1, F2, F3);
+    // printf("%f      %f      %f\n", F1, F2, F3);
 
     // ---------- LUT → DSHOT ----------
     throttle.VL = thrustToDshot(F1 * 1000.0f);

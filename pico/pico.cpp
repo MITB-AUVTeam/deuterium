@@ -82,9 +82,9 @@ int main(void) {
         }
 
 
-        if (absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > 420000000) {
-            break;
-        }
+        // if (absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > 420000000) {
+        //     break;
+        // }
 
         // nav_data_flag = raspi::update();
 
@@ -100,7 +100,8 @@ int main(void) {
         //     nav_time_out = true;
         // }
 
-        // printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
+        printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
+
 
         esc::thrust();
     }
