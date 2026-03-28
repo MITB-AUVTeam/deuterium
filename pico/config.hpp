@@ -9,8 +9,8 @@
 //BNO055
 #define BNO055_PORT i2c1
 #define BNO055_ADDR 0x28
-#define BNO055_SDA  27
-#define BNO055_SCL  26
+#define BNO055_SDA  26
+#define BNO055_SCL  27
 
 //MS5837
 #define MS5837_PORT i2c0

@@ -1,58 +1,62 @@
 #include "control.hpp"
+#include "structs.hpp"
+#include "thrustLUT.hpp"
 
 extern State state;
 extern Throttle throttle;
 
+// ================= PID =================
 struct PID {
-    float kp;
-    float ki;
-    float kd;
-    float windup;
+    float kp, ki, kd;
     float prev;
     float integral;
 };
 
+PID pid_phi = { 2.87, 0.33, 4.89, 0, 0 };
+PID pid_theta = { 2.76, 0.83, 1.12, 0, 0 };
+PID pid_z = { 1.5, 0.02, 0.3, 0, 0 };
 
-//navigation
-PID pidx = { 1.2, 0.01, 0.25, 100, 0, 0 };
-PID pidy = { 1.2, 0.01, 0.25, 100, 0, 0 };
-PID pidz = { 1.5, 0.02, 0.3, 100, 0, 0 };
-PID pidyaw = { 2.5, 0.01, 0.3, 100, 0, 0 };
-
-
-//stabalization
-PID pidroll = { 5.0, 1.0, 0, 0.02, 0, 0 };
-PID pidpitch = { 5.0, 1.0, 0, 0.02, 0, 0 };
-const float stb_dt = STB_LOOP_MS / 1000.0f;
-//inner loop LQR
-float K_lqr[3][2] = {
-  { 1.5, -1},
-  { -1.5, -1 },
-  { 0.0, 2.0 }
+// LQR
+float K_tau[2][2] = {
+    {0.2969, 0},
+    {0, 0.2878}
 };
+
+// ================= CONSTANTS =================
+const float dt = STB_LOOP_MS / 1000.0f;
+
+const float Kp_ang = 5.0;
+const float Ki_ang = 1.0;
+
+const float beta = 0.2;
+float u_smooth[3] = { 0,0,0 };
+
 const float U_MAX = 1.0;
-float u_smooth[3] = { 0, 0, 0 };
-const float beta = 0.2; // LQR output smoothing factor
 
+const float m = 20.0;
+const float g = 9.8;
+const float Fb = 500.0;
 
-static inline float constrain(float v, float lo, float hi) {
+const float Fz_eq = m * g - Fb;
+
+const float F_MIN = -23.3f;
+const float F_MAX = 29.8f;
+
+// ================= XtoF MATRIX =================
+const float XtoF[3][3] = {
+    { 0.00,  -2.00,   0.50},
+    {-2.22,   1.00,   0.25},
+    { 2.22,   1.00,   0.25}
+};
+
+// ================= HELPERS =================
+float constrain(float v, float lo, float hi) {
     return (v < lo) ? lo : (v > hi) ? hi : v;
 }
 
-int clampDSHOT(int value) {
-    if (value >= 0)
-        return constrain(value + 48, 0, 1000);
-    else if (value < 0)
-        return constrain(-value + 1049, 1001, 2000);
-    return 48;
-}
-
-float computePID(PID& p, float error, float dt)
-{
-    if (dt <= 0) return 0;
-
+float computePID(PID& p, float error) {
     p.integral += error * dt;
-    p.integral = constrain(p.integral, -p.windup, p.windup);
+    p.integral = constrain(p.integral, -100, 100);
 
     float derivative = (error - p.prev) / dt;
 
@@ -61,71 +65,74 @@ float computePID(PID& p, float error, float dt)
         p.kd * derivative;
 
     p.prev = error;
-
     return output;
 }
 
+void applyDeadband(float& val) {
+    if (fabs(val) < 0.01) val = 0;
+}
 
 void control::stbUpdate() {
 
-    float wx_ref = computePID(pidroll, state.roll, stb_dt);
-    float wy_ref = computePID(pidpitch, state.pitch, stb_dt);
+    // ---------- OUTER LOOP (ANGLE → ω_ref) ----------
+    static float phiInt = 0;
+    static float thetaInt = 0;
 
-    //inner loop LQR
-    float omega_err[2] = { state.wx - wx_ref, state.wy - wy_ref };
+    phiInt += state.roll * dt;
+    thetaInt += state.pitch * dt;
 
-    // Deadband for gyro errors
-    for (int i = 0; i < 2; i++) {
-        if (std::fabs(omega_err[i]) < 0.01) omega_err[i] = 0;
-    }
+    phiInt = constrain(phiInt, -0.02, 0.02);
+    thetaInt = constrain(thetaInt, -0.02, 0.02);
 
-    float u[3];
-    u[0] = -(K_lqr[0][0] * omega_err[0] + K_lqr[0][1] * omega_err[1]);
-    u[1] = -(K_lqr[1][0] * omega_err[0] + K_lqr[1][1] * omega_err[1]);
-    u[2] = -(K_lqr[2][0] * omega_err[0] + K_lqr[2][1] * omega_err[1]);
+    float wx_ref = Kp_ang * state.roll + Ki_ang * phiInt;
+    float wy_ref = Kp_ang * state.pitch + Ki_ang * thetaInt;
 
-    // Normalize LQR outputs
-    float umax = std::max(std::max(std::fabs(u[0]), std::fabs(u[1])), std::fabs(u[2]));
-    if (umax > U_MAX) {
-        u[0] *= U_MAX / umax;
-        u[1] *= U_MAX / umax;
-        u[2] *= U_MAX / umax;
-    }
+    // ---------- INNER LOOP (LQR) ----------
+    float omega_err_x = state.wx - wx_ref;
+    float omega_err_y = state.wy - wy_ref;
 
-    //lqr smooth output
-    for (int i = 0; i < 3; i++) {
-        u_smooth[i] = beta * u[i] + (1 - beta) * u_smooth[i];
-    }
+    applyDeadband(omega_err_x);
+    applyDeadband(omega_err_y);
 
-    throttle.VL = clampDSHOT((u_smooth[0] * 150));
-    throttle.VR = clampDSHOT((u_smooth[1] * 150));
-    throttle.VB = clampDSHOT((u_smooth[2] * 150));
-    // printf("%d      %d      %d\n", throttle.VL, throttle.VR, throttle.VB);
-}
+    float tau_phi = -(K_tau[0][0] * omega_err_x + K_tau[0][1] * omega_err_y);
+    float tau_theta = -(K_tau[1][0] * omega_err_x + K_tau[1][1] * omega_err_y);
 
-void control::navUpdate(float nav_dt) {
+    // ---------- SMOOTHING ----------
+    static float tau_phi_s = 0;
+    static float tau_theta_s = 0;
 
-    // if (abs(state.dx) < 0.05) state.dx = 0;
-    // if (abs(state.dy) < 0.05) state.dy = 0;
-    // if (abs(state.dz) < 0.05) state.dz = 0;                               // deadbands and angle warp can be applied in mpu ???
+    tau_phi_s = beta * tau_phi + (1 - beta) * tau_phi_s;
+    tau_theta_s = beta * tau_theta + (1 - beta) * tau_theta_s;
 
-    float ux = computePID(pidx, state.dx, nav_dt);
-    float uy = computePID(pidy, state.dy, nav_dt);
-    float uz = computePID(pidz, state.dz, nav_dt);
-    float uyaw = computePID(pidyaw, state.dyaw, nav_dt);
+    tau_phi = tau_phi_s;
+    tau_theta = tau_theta_s;
 
-    ux = constrain(ux, -300, 300);
-    uy = constrain(uy, -300, 300);
-    uz = constrain(uz, -300, 300);
-    uyaw = constrain(uyaw, -200, 200);
+    // ---------- Z CONTROL ----------
 
-    throttle.HL = clampDSHOT((ux - uyaw) * 100);
-    throttle.HR = clampDSHOT((ux + uyaw) * 100);
-    state.z = uz;
-    state.ref_roll = uy;
+    static float z_ref = 0;
 
-}
+    float z_error = z_ref - state.z;
 
-void control::navStop() {
-    return;
+    float Fz_pid = computePID(pid_z, z_error);
+    float Fz = Fz_eq + Fz_pid;
+
+    printf("%f      %f      %f      ", tau_phi, tau_theta, Fz);
+
+    // ---------- XtoF MIXING ----------
+
+    float F1 = XtoF[0][0] * tau_phi + XtoF[0][1] * tau_theta + XtoF[0][2] * Fz;
+    float F2 = XtoF[1][0] * tau_phi + XtoF[1][1] * tau_theta + XtoF[1][2] * Fz;
+    float F3 = XtoF[2][0] * tau_phi + XtoF[2][1] * tau_theta + XtoF[2][2] * Fz;
+
+    // ---------- SATURATION ----------
+    F1 = constrain(F1, F_MIN, F_MAX);
+    F2 = constrain(F2, F_MIN, F_MAX);
+    F3 = constrain(F3, F_MIN, F_MAX);
+
+    printf("%f      %f      %f\n", F1, F2, F3);
+
+    // ---------- LUT → DSHOT ----------
+    throttle.VL = thrustToDshot(F1 * 1000.0f);
+    throttle.VR = thrustToDshot(F2 * 1000.0f);
+    throttle.VB = thrustToDshot(F3 * 1000.0f);
 }

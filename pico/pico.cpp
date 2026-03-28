@@ -21,6 +21,8 @@ bool nav_time_out = true;       //starts is safe consdition
 absolute_time_t last_nav_data_time = get_absolute_time();
 absolute_time_t new_nav_data_time = get_absolute_time();
 
+absolute_time_t stopper = get_absolute_time();
+
 struct repeating_timer control_timer;
 
 bool control_timer_cb(struct repeating_timer* t)
@@ -43,7 +45,7 @@ int main(void) {
     sleep_ms(5000);
     printf("program initiating\n");
 
-    // imu::init();
+    imu::init();
 
     bool test = presens::init();
     printf("%d\n", test);
@@ -53,6 +55,8 @@ int main(void) {
     esc::arm();
     esc::mode3d();
     raspi::init();
+
+    // sleep_ms(240000);
 
     printf("program initialised\n");
 
@@ -67,12 +71,20 @@ int main(void) {
 
         if (stb_flag) {
             stb_flag = false;
-            // imu::update();
+
+            imu::update();
+
             presens::read();
-            printf("%f\n", presens::depth());
-            // control::stbUpdate();
+
+            state.z = presens::depth();
+            // printf("%f\n", state.z);
+            control::stbUpdate();
         }
 
+
+        if (absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > 420000000) {
+            break;
+        }
 
         // nav_data_flag = raspi::update();
 
