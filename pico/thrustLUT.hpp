@@ -72,9 +72,9 @@ float thrustToDshot(float thrust) {
   return dshot;
 }
 
-int main() {
-  for (float i = -35.0f; i < 35.0f; i++) {
-    printf("%.1f, %.2f\n", i, thrustToDshot(i));
-  }
-  return 0;
-}
+// int main() {
+//   for (float i = -35.0f; i < 35.0f; i++) {
+//     printf("%.1f, %.2f\n", i, thrustToDshot(i));
+//   }
+//   return 0;
+// }

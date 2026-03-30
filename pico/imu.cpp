@@ -107,12 +107,12 @@ void imu::update() {
 
 
     //low pass filter
-    state.wx = alpha * state.wx + (1 - alpha) * wx_filt_last;
-    state.wy = alpha * state.wy + (1 - alpha) * wy_filt_last;
-    state.wz = alpha * state.wz + (1 - alpha) * wz_filt_last;
-    wx_filt_last = state.wx;
-    wy_filt_last = state.wy;
-    wz_filt_last = state.wz;
+    // state.wx = alpha * state.wx + (1 - alpha) * wx_filt_last;
+    // state.wy = alpha * state.wy + (1 - alpha) * wy_filt_last;
+    // state.wz = alpha * state.wz + (1 - alpha) * wz_filt_last;
+    // wx_filt_last = state.wx;
+    // wy_filt_last = state.wy;
+    // wz_filt_last = state.wz;
 
     // printf("%f      %f      %f      %f      %f\n", state.roll, state.pitch, state.wx, state.wy, state.wz);
 }

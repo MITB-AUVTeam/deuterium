@@ -35,7 +35,7 @@ const float U_MAX = 1.0;
 
 const float m = 20.0;
 const float g = 9.8;
-const float Fb = 500.0;
+const float Fb = 196.0;
 
 const float Fz_eq = m * g - Fb;
 
@@ -111,7 +111,9 @@ void control::stbUpdate() {
 
     static float z_ref = 0;
 
-    float z_error = z_ref - state.z;
+    // float z_error = z_ref - state.z;
+    float z_error = 0;
+
 
     float Fz_pid = computePID(pid_z, z_error);
     float Fz = Fz_eq + Fz_pid;
@@ -124,12 +126,14 @@ void control::stbUpdate() {
     float F2 = XtoF[1][0] * tau_phi + XtoF[1][1] * tau_theta + XtoF[1][2] * Fz;
     float F3 = XtoF[2][0] * tau_phi + XtoF[2][1] * tau_theta + XtoF[2][2] * Fz;
 
+    printf("%f      %f      %f        ", F1, F2, F3);
+
     // ---------- SATURATION ----------
     F1 = constrain(F1, F_MIN, F_MAX);
     F2 = constrain(F2, F_MIN, F_MAX);
     F3 = constrain(F3, F_MIN, F_MAX);
 
-    // printf("%f      %f      %f\n", F1, F2, F3);
+    printf("%f      %f      %f\n", F1, F2, F3);
 
     // ---------- LUT → DSHOT ----------
     throttle.VL = thrustToDshot(F1 * 1000.0f);
