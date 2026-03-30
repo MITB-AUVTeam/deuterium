@@ -1,15 +1,19 @@
-static const float DS_MIN = 1100;
-static const float DS_MAX = 1900;
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
 
-static const float DEADZONE = 300.0;
-static const float SOFTZONE = 100.0;
+static const float DS_MIN = 48;
+static const float DS_MAX = 2047;
 
-static const float NEUTRAL = 1118.0;
+static const float DEADZONE = 1.0f;
+static const float SOFTZONE = 0.3f;
+
+static const float NEUTRAL = 1118.0f;
 
 static float smooth(float x) {
-  if (x < 0.0) return 0.0;
-  if (x > 1.0) return 1.0;
-  return x * x * (3 - 2 * x);
+  if (x < 0.0f) return 0.0f;
+  if (x > 1.0f) return 1.0f;
+  return x * x * (3.0f - 2.0f * x);
 }
 
 static float line(float m, float b, float x) {
@@ -17,52 +21,60 @@ static float line(float m, float b, float x) {
 }
 
 static float negativeLUT(float t) {
-  if (t < 100) return line(-0.023303, 1112.522106, t);
-  if (t < 200) return line(-0.015108, 1405.382453, t);
-  if (t < 300) return line(-0.017990, 1319.950737, t);
-  if (t < 400) return line(-0.019187, 1286.576244, t);
-  if (t < 500) return line(-0.019336, 1282.509349, t);
-  if (t < 600) return line(-0.023092, 1223.174285, t);
-  if (t < 700) return line(-0.027684, 1172.797434, t);
-  return line(-0.035601, 1132.755869, t);
+  if (t < -35.245375f) return line(-24.063208f, 1083.193100f, t);
+  if (t < -27.950000f) return line(-15.436931f, 1394.560894f, t);
+  if (t < -22.065000f) return line(-19.105131f, 1289.319627f, t);
+  if (t < -16.359000f) return line(-19.369792f, 1282.107987f, t);
+  if (t < -11.230000f) return line(-22.324623f, 1233.694270f, t);
+  if (t < -7.090750f) return line(-26.527299f, 1183.575054f, t);
+  if (t < -3.429125f) return line(-30.847016f, 1152.325604f, t);
+  return line(-39.222849f, 1126.814094f, t);
 }
 
 static float positiveLUT(float t) {
-  if (t < 100) return line(0.028581, 132.168533, t);
-  if (t < 200) return line(0.021986, 171.323136, t);
-  if (t < 300) return line(0.018402, 218.989333, t);
-  if (t < 400) return line(0.015280, 281.793738, t);
-  if (t < 500) return line(0.015789, 267.183323, t);
-  if (t < 600) return line(0.013614, 337.550535, t);
-  if (t < 700) return line(0.012093, 396.288025, t);
-  return line(0.015859, 222.987404, t);
+  if (t < 3.912000f) return line(32.124395f, 125.585490f, t);
+  if (t < 8.713000f) return line(23.893044f, 155.949785f, t);
+  if (t < 14.092000f) return line(21.070029f, 181.438211f, t);
+  if (t < 20.426000f) return line(18.156720f, 223.273723f, t);
+  if (t < 27.827000f) return line(15.094079f, 286.095627f, t);
+  if (t < 35.718000f) return line(15.005882f, 290.617719f, t);
+  if (t < 44.364000f) return line(12.503613f, 378.937966f, t);
+  return line(15.162766f, 257.577506f, t);
 }
 
 float thrustToDshot(float thrust) {
 
-  float absT = abs(thrust / 1000.f);
-
-  if (absT < DEADZONE) {
+  // Deadzone
+  if (fabs(thrust) < DEADZONE) {
     return NEUTRAL;
   }
 
   float dshot;
 
-  if (thrust > 0) {
-    dshot = positiveLUT(absT);
+  if (thrust > 0.0f) {
+    dshot = positiveLUT(thrust);
   }
   else {
-    dshot = negativeLUT(absT);
+    dshot = negativeLUT(thrust);
   }
 
-  if (absT < DEADZONE + SOFTZONE) {
-    float x = (absT - DEADZONE) / SOFTZONE;
+  // Soft transition
+  if (fabs(thrust) < DEADZONE + SOFTZONE) {
+    float x = (fabs(thrust) - DEADZONE) / SOFTZONE;
     float w = smooth(x);
-    dshot = NEUTRAL * (1 - w) + dshot * w;
+    dshot = NEUTRAL * (1.0f - w) + dshot * w;
   }
 
+  // Clamp
   if (dshot < DS_MIN) dshot = DS_MIN;
   if (dshot > DS_MAX) dshot = DS_MAX;
 
   return dshot;
+}
+
+int main() {
+  for (float i = -35.0f; i < 35.0f; i++) {
+    printf("%.1f, %.2f\n", i, thrustToDshot(i));
+  }
+  return 0;
 }
