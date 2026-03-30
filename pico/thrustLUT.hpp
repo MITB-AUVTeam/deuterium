@@ -5,10 +5,9 @@
 static const float DS_MIN = 48;
 static const float DS_MAX = 2047;
 
-static const float DEADZONE = 1.0f;
-static const float SOFTZONE = 0.3f;
+static const float DEADZONE = 0.3f;
 
-static const float NEUTRAL = 1118.0f;
+static const float NEUTRAL = 48.0f;
 
 static float smooth(float x) {
   if (x < 0.0f) return 0.0f;
@@ -57,14 +56,6 @@ float thrustToDshot(float thrust) {
   else {
     dshot = negativeLUT(thrust);
   }
-
-  // Soft transition
-  if (fabs(thrust) < DEADZONE + SOFTZONE) {
-    float x = (fabs(thrust) - DEADZONE) / SOFTZONE;
-    float w = smooth(x);
-    dshot = NEUTRAL * (1.0f - w) + dshot * w;
-  }
-
   // Clamp
   if (dshot < DS_MIN) dshot = DS_MIN;
   if (dshot > DS_MAX) dshot = DS_MAX;
@@ -73,8 +64,8 @@ float thrustToDshot(float thrust) {
 }
 
 // int main() {
-//   for (float i = -35.0f; i < 35.0f; i++) {
-//     printf("%.1f, %.2f\n", i, thrustToDshot(i));
+//   for (float i = -3.0f; i < 3.0f; i += 0.05) {
+//     printf("%.2f, %.2f\n", i, thrustToDshot(i));
 //   }
 //   return 0;
 // }

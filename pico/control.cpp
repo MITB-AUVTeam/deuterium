@@ -136,7 +136,7 @@ void control::stbUpdate() {
     printf("%f      %f      %f\n", F1, F2, F3);
 
     // ---------- LUT → DSHOT ----------
-    throttle.VL = thrustToDshot(F1 * 1000.0f);
-    throttle.VR = thrustToDshot(F2 * 1000.0f);
-    throttle.VB = thrustToDshot(F3 * 1000.0f);
+    throttle.VL = thrustToDshot(F1);
+    throttle.VR = thrustToDshot(F2);
+    throttle.VB = thrustToDshot(F3);
 }

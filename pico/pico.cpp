@@ -42,7 +42,7 @@ int main(void) {
 
     stdio_init_all();
 
-    sleep_ms(5000);
+    sleep_ms(1000);
     printf("program initiating\n");
 
     imu::init();
@@ -80,11 +80,6 @@ int main(void) {
             // printf("%f\n", state.z);
             control::stbUpdate();
         }
-
-
-        // if (absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > 420000000) {
-        //     break;
-        // }
 
         // nav_data_flag = raspi::update();
 
