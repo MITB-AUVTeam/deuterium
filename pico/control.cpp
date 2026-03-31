@@ -126,14 +126,14 @@ void control::stbUpdate() {
     float F2 = XtoF[1][0] * tau_phi + XtoF[1][1] * tau_theta + XtoF[1][2] * Fz;
     float F3 = XtoF[2][0] * tau_phi + XtoF[2][1] * tau_theta + XtoF[2][2] * Fz;
 
-    printf("%f      %f      %f        ", F1, F2, F3);
+    // printf("%f      %f      %f        ", F1, F2, F3);
 
     // ---------- SATURATION ----------
     F1 = constrain(F1, F_MIN, F_MAX);
     F2 = constrain(F2, F_MIN, F_MAX);
     F3 = constrain(F3, F_MIN, F_MAX);
 
-    printf("%f      %f      %f\n", F1, F2, F3);
+    // printf("%f      %f      %f\n", F1, F2, F3);
 
     // ---------- LUT → DSHOT ----------
     throttle.VL = thrustToDshot(F1);
