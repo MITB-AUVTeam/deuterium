@@ -92,8 +92,8 @@ void imu::update() {
     state.pitch = wrapAngle(state.pitch - pitch0);
 
     // Deadband for small angles
-    if (std::abs(state.roll) < 0.05f) state.roll = 0;
-    if (std::abs(state.pitch) < 0.05f) state.pitch = 0;
+    // if (std::abs(state.roll) < 0.05f) state.roll = 0;
+    // if (std::abs(state.pitch) < 0.05f) state.pitch = 0;
 
     uint8_t reg_gyro = 0x14;
     i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg_gyro, 1, true);

@@ -76,7 +76,7 @@ int main(void) {
             presens::read();
 
             state.z = presens::depth();
-            printf("%f\n", state.z);
+            // printf("%f\n", state.z);
             control::stbUpdate();
         }
 
@@ -94,7 +94,7 @@ int main(void) {
         //     nav_time_out = true;
         // }
 
-        // printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
+        printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
 
 
         esc::thrust();

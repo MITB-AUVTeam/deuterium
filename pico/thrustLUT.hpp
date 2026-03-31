@@ -5,7 +5,7 @@
 static const float DS_MIN = 48;
 static const float DS_MAX = 2047;
 
-static const float DEADZONE = 0.1f;
+static const float DEADZONE = 0.01f;
 
 static const float NEUTRAL = 48.0f;
 

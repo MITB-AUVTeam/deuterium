@@ -91,8 +91,8 @@ void control::stbUpdate() {
     float omega_err_x = state.wx - wx_ref;
     float omega_err_y = state.wy - wy_ref;
 
-    applyDeadband(omega_err_x);
-    applyDeadband(omega_err_y);
+    // applyDeadband(omega_err_x);
+    // applyDeadband(omega_err_y);
 
     float tau_phi = -(K_tau[0][0] * omega_err_x + K_tau[0][1] * omega_err_y);
     float tau_theta = -(K_tau[1][0] * omega_err_x + K_tau[1][1] * omega_err_y);
