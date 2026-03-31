@@ -61,34 +61,39 @@ uint8_t crc4(uint16_t n_prom[]) {
     return (n_rem >> 12) & 0xF;
 }
 
-bool presens::init() {
+void presens::init() {
+    uint8_t crcRead = 0;
+    uint8_t crcCalculated = 1;
 
-    i2c_init(I2C_PORT, 400 * 1000);
 
-    gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
-    gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
-    gpio_pull_up(I2C_SDA);
-    gpio_pull_up(I2C_SCL);
+    do {
+        i2c_init(I2C_PORT, 400 * 1000);
+        gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
+        gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
+        gpio_pull_up(I2C_SDA);
+        gpio_pull_up(I2C_SCL);
 
-    uint8_t cmd = MS5837_RESET;
-    i2c_write_blocking(I2C_PORT, I2C_ADDR, &cmd, 1, false);
-    sleep_ms(500);
+        uint8_t cmd = MS5837_RESET;
+        i2c_write_blocking(I2C_PORT, I2C_ADDR, &cmd, 1, false);
+        sleep_ms(500);
 
-    for (uint8_t i = 0; i < 7; i++) {
-        uint8_t reg = MS5837_PROM_READ + i * 2;
-        i2c_write_blocking(I2C_PORT, I2C_ADDR, &reg, 1, true);
-        uint8_t buffer[2];
-        i2c_read_blocking(I2C_PORT, I2C_ADDR, buffer, 2, false);
+        for (uint8_t i = 0; i < 7; i++) {
+            uint8_t reg = MS5837_PROM_READ + i * 2;
+            i2c_write_blocking(I2C_PORT, I2C_ADDR, &reg, 1, true);
+            uint8_t buffer[2];
+            i2c_read_blocking(I2C_PORT, I2C_ADDR, buffer, 2, false);
 
-        C[i] = (buffer[0] << 8) | buffer[1];
-    }
+            C[i] = (buffer[0] << 8) | buffer[1];
+        }
 
-    uint8_t crcRead = C[0] >> 12;
-    uint8_t crcCalculated = crc4(&C[0]);
+        crcRead = C[0] >> 12;
+        crcCalculated = crc4(&C[0]);
+        printf("MS5837 not connected\n");
+        sleep_ms(500);
+    } while (crcCalculated != crcRead);
 
-    if (crcCalculated != crcRead) {
-        return false;
-    }
+    printf("MS5837 connected\n");
+
     if (C[1] < MS5837_30BA_MIN_SENSITIVITY || C[1] > MS5837_02BA_MAX_SENSITIVITY)
     {
         _model = MS5837_UNRECOGNISED;
@@ -101,8 +106,6 @@ bool presens::init() {
     {
         _model = MS5837_30BA;
     }
-    printf("MS5837 connected\n");
-    return true;
 }
 void calculate() {
     // Given C1-C6 and D1, D2, calculated TEMP and P

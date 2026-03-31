@@ -8,7 +8,7 @@
 
 class presens {
 public:
-    static bool init();
+    static void init();
 
     static void read();
 
