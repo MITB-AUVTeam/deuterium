@@ -9,8 +9,14 @@
 //BNO055
 #define BNO055_PORT i2c1
 #define BNO055_ADDR 0x28
-#define BNO055_SDA  27
-#define BNO055_SCL  26
+#define BNO055_SDA  26
+#define BNO055_SCL  27
+
+//MS5837
+#define MS5837_PORT i2c0
+#define MS5837_ADDR 0x76
+#define MS5837_SDA 28
+#define MS5837_SCL 29
 
 //PIO of ESC
 #define PIO_VB 5
@@ -20,9 +26,9 @@
 #define PIO_HL 9
 
 //RASPI UART 
-#define RASPI_TX 29
-#define RASPI_RX 28
+#define RASPI_TX 24
+#define RASPI_RX 25
 #define RASPI_BAUDRATE  115200
-#define RASPI_UARTID  uart0
+#define RASPI_UARTID  uart1
 #define RASPI_SOF0 0xAA
 #define RASPI_SOF1 0x55

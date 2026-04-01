@@ -11,7 +11,7 @@ public:
 
     static void stbUpdate();
 
-    static void navUpdate();
+    static void navUpdate(float nav_dt);
 
     static void navStop();
 };

@@ -41,6 +41,7 @@ add_executable(pico
     control.cpp
     esc.cpp
     raspi.cpp
+    pressure.cpp
     )
 
 pico_set_program_name(pico "pico")
