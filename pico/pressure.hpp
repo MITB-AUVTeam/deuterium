@@ -11,6 +11,4 @@ public:
     static void init();
 
     static void read();
-
-    static float depth();
 };

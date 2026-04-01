@@ -4,12 +4,12 @@ extern State state;
 
 int recstate = 0;
 int recbuffindex = 0;
-uint8_t recbuff[18];
+uint8_t recbuff[15];
 
 uint16_t calccrc(uint8_t* data) {
     uint16_t crc = 0xFFFF;   // initial value
 
-    for (uint16_t i = 0; i < 16; i++) {
+    for (uint16_t i = 0; i < 13; i++) {
         crc ^= (uint16_t)data[i] << 8;
 
         for (uint8_t j = 0; j < 8; j++) {
@@ -29,6 +29,8 @@ void raspi::init() {
     gpio_set_function(RASPI_TX, GPIO_FUNC_UART);
     gpio_set_function(RASPI_RX, GPIO_FUNC_UART);
 }
+
+uint8_t id = 0;
 
 bool raspi::update() {
 
@@ -50,14 +52,14 @@ bool raspi::update() {
         case 2:
             recbuff[recbuffindex] = uart_getc(RASPI_UARTID);
             recbuffindex++;
-            if (recbuffindex >= 18) {
-                uint16_t reccrc = recbuff[16] | (recbuff[17] << 8);
+            if (recbuffindex >= 15) {
+                uint16_t reccrc = recbuff[13] | (recbuff[14] << 8);
                 uint16_t computedcrc = calccrc(recbuff);
                 if (reccrc == computedcrc) {
-                    memcpy(&state.dx, &recbuff[0], 4);
-                    memcpy(&state.dy, &recbuff[4], 4);
-                    memcpy(&state.dz, &recbuff[8], 4);
-                    memcpy(&state.dyaw, &recbuff[12], 4);
+                    memcpy(&id, &recbuff[0], 1);
+                    memcpy(&state.dx, &recbuff[1], 4);
+                    memcpy(&state.dyaw, &recbuff[5], 4);
+                    memcpy(&state.ref_z, &recbuff[9], 4);
                 }
                 recbuffindex = 0;
                 recstate = 0;

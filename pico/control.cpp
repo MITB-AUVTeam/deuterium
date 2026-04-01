@@ -12,8 +12,8 @@ struct PID {
     float integral;
 };
 
-PID pid_phi = { 2.87, 0.33, 4.89, 0, 0 };
-PID pid_theta = { 2.76, 0.83, 1.12, 0, 0 };
+PID pid_roll = { 2.87, 0.33, 4.89, 0, 0 };
+PID pid_pitch = { 2.76, 0.83, 1.12, 0, 0 };
 PID pid_z = { 1.5, 0.02, 0.3, 0, 0 };
 
 // LQR
@@ -75,17 +75,17 @@ void applyDeadband(float& val) {
 void control::stbUpdate() {
 
     // ---------- OUTER LOOP (ANGLE → ω_ref) ----------
-    static float phiInt = 0;
-    static float thetaInt = 0;
+    static float rollInt = 0;
+    static float pitchInt = 0;
 
-    phiInt += state.roll * dt;
-    thetaInt += state.pitch * dt;
+    rollInt += state.roll * dt;
+    pitchInt += state.pitch * dt;
 
-    phiInt = constrain(phiInt, -0.02, 0.02);
-    thetaInt = constrain(thetaInt, -0.02, 0.02);
+    rollInt = constrain(rollInt, -0.02, 0.02);
+    pitchInt = constrain(pitchInt, -0.02, 0.02);
 
-    float wx_ref = Kp_ang * state.roll + Ki_ang * phiInt;
-    float wy_ref = Kp_ang * state.pitch + Ki_ang * thetaInt;
+    float wx_ref = Kp_ang * state.roll + Ki_ang * rollInt;
+    float wy_ref = Kp_ang * state.pitch + Ki_ang * pitchInt;
 
     // ---------- INNER LOOP (LQR) ----------
     float omega_err_x = state.wx - wx_ref;
@@ -94,18 +94,18 @@ void control::stbUpdate() {
     // applyDeadband(omega_err_x);
     // applyDeadband(omega_err_y);
 
-    float tau_phi = -(K_tau[0][0] * omega_err_x + K_tau[0][1] * omega_err_y);
-    float tau_theta = -(K_tau[1][0] * omega_err_x + K_tau[1][1] * omega_err_y);
+    float tau_roll = -(K_tau[0][0] * omega_err_x + K_tau[0][1] * omega_err_y);
+    float tau_pitch = -(K_tau[1][0] * omega_err_x + K_tau[1][1] * omega_err_y);
 
     // ---------- SMOOTHING ----------
-    static float tau_phi_s = 0;
-    static float tau_theta_s = 0;
+    static float tau_roll_s = 0;
+    static float tau_pitch_s = 0;
 
-    tau_phi_s = beta * tau_phi + (1 - beta) * tau_phi_s;
-    tau_theta_s = beta * tau_theta + (1 - beta) * tau_theta_s;
+    tau_roll_s = beta * tau_roll + (1 - beta) * tau_roll_s;
+    tau_pitch_s = beta * tau_pitch + (1 - beta) * tau_pitch_s;
 
-    tau_phi = tau_phi_s;
-    tau_theta = tau_theta_s;
+    tau_roll = tau_roll_s;
+    tau_pitch = tau_pitch_s;
 
     // ---------- Z CONTROL ----------
 
@@ -114,26 +114,19 @@ void control::stbUpdate() {
     float z_error = z_ref - state.z;
     // float z_error = 0;
 
-
     float Fz_pid = computePID(pid_z, z_error);
     float Fz = Fz_eq + Fz_pid;
 
-    // printf("%f      %f      %f      ", tau_phi, tau_theta, Fz);
-
     // ---------- XtoF MIXING ----------
 
-    float F1 = XtoF[0][0] * tau_phi + XtoF[0][1] * tau_theta + XtoF[0][2] * Fz;
-    float F2 = XtoF[1][0] * tau_phi + XtoF[1][1] * tau_theta + XtoF[1][2] * Fz;
-    float F3 = XtoF[2][0] * tau_phi + XtoF[2][1] * tau_theta + XtoF[2][2] * Fz;
-
-    // printf("%f      %f      %f        ", F1, F2, F3);
+    float F1 = XtoF[0][0] * tau_roll + XtoF[0][1] * tau_pitch + XtoF[0][2] * Fz;
+    float F2 = XtoF[1][0] * tau_roll + XtoF[1][1] * tau_pitch + XtoF[1][2] * Fz;
+    float F3 = XtoF[2][0] * tau_roll + XtoF[2][1] * tau_pitch + XtoF[2][2] * Fz;
 
     // ---------- SATURATION ----------
     F1 = constrain(F1, F_MIN, F_MAX);
     F2 = constrain(F2, F_MIN, F_MAX);
     F3 = constrain(F3, F_MIN, F_MAX);
-
-    // printf("%f      %f      %f\n", F1, F2, F3);
 
     // ---------- LUT → DSHOT ----------
     throttle.VL = thrustToDshot(F1);

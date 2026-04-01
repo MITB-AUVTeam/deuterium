@@ -45,9 +45,9 @@ int main(void) {
     sleep_ms(3000);
     printf("program initiating\n");
 
-    imu::init();
+    // imu::init();
 
-    presens::init();
+    // presens::init();
 
     esc::pio_init();
 
@@ -70,26 +70,28 @@ int main(void) {
 
         if (stb_flag) {
             stb_flag = false;
-            imu::update();
-            presens::read();
-            control::stbUpdate();
+            // imu::update();
+            // presens::read();
+            // control::stbUpdate();
         }
 
-        // nav_data_flag = raspi::update();
+        nav_data_flag = raspi::update();
 
-        // if (nav_data_flag) {
-        //     new_nav_data_time = get_absolute_time();
-        //     float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
-        //     last_nav_data_time = new_nav_data_time;
-        //     nav_time_out = false;
-        //     control::navUpdate(nav_dt);
-        // }
-        // if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
-        //     control::navStop();
-        //     nav_time_out = true;
-        // }
+        if (nav_data_flag) {
+            new_nav_data_time = get_absolute_time();
+            float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
+            last_nav_data_time = new_nav_data_time;
+            nav_time_out = false;
+            // control::navUpdate(nav_dt);
+            printf("%f      %f      %f\n", state.dx, state.dyaw, state.ref_z);
+        }
+        if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
+            // control::navStop();
+            nav_time_out = true;
+            printf("timeoout");
+        }
 
-        printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
+        // printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
 
 
         esc::thrust();

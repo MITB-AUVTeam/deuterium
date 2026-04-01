@@ -3,15 +3,15 @@
 
 struct State {
     float roll, pitch, z;
-    float ref_roll;
+    float ref_roll, ref_z;
     float wx, wy, wz;
-    float dx, dy, dz, dyaw;
+    float dx, dy, dyaw;
 
     State() {
         roll = pitch = z = 0;
-        ref_roll = 0;
+        ref_roll = ref_z = 0;
         wx = wy = wz = 0;
-        dx = dy = dz = dyaw = 0;
+        dx = dy = dyaw = 0;
     }
 };
 
