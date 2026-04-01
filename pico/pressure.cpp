@@ -1,5 +1,7 @@
 #include "pressure.hpp"
 
+extern State state;
+
 // I2C defines
 // This example will use I2C0 on GPIO8 (SDA) and GPIO9 (SCL) running at 400KHz.
 // Pins can be changed, see the GPIO function select table in the datasheet for information on GPIO assignments
@@ -186,7 +188,7 @@ float temperature() {
     return TEMP / 100.0f;
 }
 
-float presens::depth() {
+float depth() {
     return (pressure(Pa) - 101300) / (fluidDensity * 9.80665);
 }
 
@@ -218,4 +220,7 @@ void presens::read() {
     D2_temp = buffer[0] << 16 | buffer[1] << 8 | buffer[2];
 
     calculate();
+
+    state.z = depth();
+    state.z += 1;
 }

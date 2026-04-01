@@ -70,14 +70,8 @@ int main(void) {
 
         if (stb_flag) {
             stb_flag = false;
-
             imu::update();
-
             presens::read();
-
-            state.z = presens::depth();
-            state.z += 1;
-            // printf("%f\n", state.z);
             control::stbUpdate();
         }
 
