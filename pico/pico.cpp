@@ -76,6 +76,7 @@ int main(void) {
             presens::read();
 
             state.z = presens::depth();
+            state.z += 1;
             // printf("%f\n", state.z);
             control::stbUpdate();
         }

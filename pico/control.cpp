@@ -44,9 +44,9 @@ const float F_MAX = 29.8f;
 
 // ================= XtoF MATRIX =================
 const float XtoF[3][3] = {
-    { 0.00,  -2.00,   0.50},
-    {-2.22,   1.00,   0.25},
-    { 2.22,   1.00,   0.25}
+    { 0.00,  2.00,  10},
+    {-2.22,   -1.00,   5},
+    { 2.22,   -1.00,   5}
 };
 
 // ================= HELPERS =================
@@ -109,10 +109,10 @@ void control::stbUpdate() {
 
     // ---------- Z CONTROL ----------
 
-    static float z_ref = 0;
+    static float z_ref = 0.25;
 
-    // float z_error = z_ref - state.z;
-    float z_error = 0;
+    float z_error = z_ref - state.z;
+    // float z_error = 0;
 
 
     float Fz_pid = computePID(pid_z, z_error);
