@@ -74,3 +74,18 @@ bool raspi::update() {
     }
     return false;
 }
+
+void raspi::sendpres() {
+    uint8_t* p = (uint8_t*)&state.z;
+
+    if (!uart_is_writable(RASPI_UARTID)) return;
+    uart_putc(RASPI_UARTID, RASPI_SOF0);
+
+    if (!uart_is_writable(RASPI_UARTID)) return;
+    uart_putc(RASPI_UARTID, RASPI_SOF1);
+
+    for (int i = 0; i < 4; i++) {
+        if (!uart_is_writable(RASPI_UARTID)) return;
+        uart_putc(RASPI_UARTID, p[i]);
+    }
+}

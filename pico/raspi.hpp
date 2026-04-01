@@ -13,4 +13,6 @@ public:
     static void init();
 
     static bool update();
+
+    static void sendpres();
 };

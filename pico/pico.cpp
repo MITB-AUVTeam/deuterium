@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 
+#include "config.hpp"
 #include "structs.hpp"
 #include "imu.hpp"
 #include "control.hpp"
@@ -70,9 +71,10 @@ int main(void) {
 
         if (stb_flag) {
             stb_flag = false;
-            // imu::update();
-            // presens::read();
-            // control::stbUpdate();
+            imu::update();
+            presens::read();
+            control::stbUpdate();
+            raspi::sendpres();
         }
 
         nav_data_flag = raspi::update();
