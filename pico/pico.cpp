@@ -41,6 +41,7 @@ int main(void) {
 
     sleep_ms(1000);
     raspi::init();
+    raspi::blockforMPU();
     printf("program initiating\n");
 
     imu::init();

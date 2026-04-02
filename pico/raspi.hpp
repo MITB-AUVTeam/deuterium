@@ -12,6 +12,8 @@ class raspi {
 public:
     static void init();
 
+    static void blockforMPU();
+
     static bool update();
 
     static void sendpres();

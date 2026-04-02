@@ -30,6 +30,19 @@ void raspi::init() {
     gpio_set_function(RASPI_RX, GPIO_FUNC_UART);
 }
 
+void raspi::blockforMPU() {
+    for (;;) {
+        uint8_t b0 = uart_getc(RASPI_UARTID);
+        uint8_t b1 = uart_getc(RASPI_UARTID);
+        if (b0 == RASPI_SOF0 && b1 == RASPI_SOF1) {
+            sleep_ms(100);
+            uart_putc(RASPI_UARTID, RASPI_SOF0);
+            uart_putc(RASPI_UARTID, RASPI_SOF1);
+            return;
+        }
+    }
+}
+
 uint8_t id = 0;
 
 bool raspi::update() {
