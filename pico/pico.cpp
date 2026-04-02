@@ -37,26 +37,18 @@ Throttle throttle;
 
 int main(void) {
 
-    // gpio_init(15);
-    // gpio_set_dir(15, GPIO_OUT);
-    // gpio_put(15, 0);
-
     stdio_init_all();
 
-    sleep_ms(3000);
+    sleep_ms(1000);
+    raspi::init();
     printf("program initiating\n");
 
-    // imu::init();
-
-    // presens::init();
+    imu::init();
+    presens::init();
 
     esc::pio_init();
-
     esc::arm();
     esc::mode3d();
-    raspi::init();
-
-    // sleep_ms(240000);
 
     printf("program initialised\n");
 
