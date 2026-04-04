@@ -1,4 +1,5 @@
-#include <stdlib.h> 
+#include "pico/stdlib.h" 
+#include <string.h>
 #include <stdio.h>
 #include <cmath>
 #include <algorithm>
@@ -8,10 +9,8 @@
 
 class control {
 public:
-
+    static void init();
     static void stbUpdate();
-
     static void navUpdate(float nav_dt);
-
     static void navStop();
 };

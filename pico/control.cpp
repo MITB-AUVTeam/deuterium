@@ -49,7 +49,17 @@ const float XtoF[3][3] = {
    { 2.2222,    1.0000, 0.2200}
 };
 
+// Globals
+bool thrusterOff;
+bool pidUpdate;
+
+#define BUF_SIZE 512
+
+static char input_buf[BUF_SIZE];
+static int buf_idx = 0;
+
 // ================= HELPERS =================
+
 float constrain(float v, float lo, float hi) {
     return (v < lo) ? lo : (v > hi) ? hi : v;
 }
@@ -72,7 +82,64 @@ void applyDeadband(float& val) {
     if (fabs(val) < 0.01) val = 0;
 }
 
+void control::init() {
+    thrusterOff = true;
+    pidUpdate = false;
+}
+
 void control::stbUpdate() {
+    int c;
+
+    while ((c = getchar_timeout_us(0)) != PICO_ERROR_TIMEOUT) {
+
+        if (c == '\n' || c == '\r') {
+
+            input_buf[buf_idx] = '\0';
+
+            printf("CMD: [%s]\n", input_buf);
+
+
+            // Thruster control
+            if(!pidUpdate) {
+                if (strcmp(input_buf, "0") == 0) {
+                    thrusterOff = true;
+                    printf("Thrusters off\n");
+                }
+                else if (strcmp(input_buf, "1") == 0) {
+                    thrusterOff = false;
+                    printf("Thrusters on\n");
+                }
+    
+                else if (strcmp(input_buf, "p") == 0 && thrusterOff) {
+                    pidUpdate = true;
+                    printf("Update PID: <kp ki kd>\n");
+                }
+            }
+            else if(pidUpdate) {
+                float kp, ki, kd;
+
+                if (sscanf(input_buf, "%f %f %f", &kp, &ki, &kd) == 3) {
+                    printf("Parsed: %f %f %f\n", kp, ki, kd);
+
+                    pid_z.kp = kp;
+                    pid_z.ki = ki;
+                    pid_z.kd = kd;
+
+                    pidUpdate = false;
+                } else {
+                    printf("Invalid format\n");
+                }
+            }
+
+            buf_idx = 0;
+        }
+
+        else {
+            if (buf_idx < BUF_SIZE - 1) {
+                input_buf[buf_idx++] = (char)c;
+            }
+        }
+    }
 
     // ---------- OUTER LOOP (ANGLE → ω_ref) ----------
     static float rollInt = 0;
@@ -129,7 +196,16 @@ void control::stbUpdate() {
     F3 = constrain(F3, F_MIN, F_MAX);
 
     // ---------- LUT → DSHOT ----------
-    throttle.VL = thrustToDshot(F1);
-    throttle.VR = thrustToDshot(F2);
-    throttle.VB = thrustToDshot(F3);
+    if(thrusterOff) {
+        throttle.VL = thrustToDshot(0);
+        throttle.VR = thrustToDshot(0);
+        throttle.VB = thrustToDshot(0);
+
+        return;
+    } else {
+        throttle.VL = thrustToDshot(F1);
+        throttle.VR = thrustToDshot(F2);
+        throttle.VB = thrustToDshot(F3);
+    }
+
 }

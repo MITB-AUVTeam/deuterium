@@ -47,6 +47,8 @@ int main(void) {
 
     printf("program initiating\n");
 
+    for(;;) control::stbUpdate();
+
     imu::init();
     presens::init();
 
