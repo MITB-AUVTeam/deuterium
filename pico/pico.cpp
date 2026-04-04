@@ -39,9 +39,12 @@ int main(void) {
 
     stdio_init_all();
 
+    // sleep_ms(180000); 
+
     sleep_ms(1000);
-    raspi::init();
-    raspi::blockforMPU();
+    //raspi::init();
+    //raspi::blockforMPU();
+
     printf("program initiating\n");
 
     imu::init();
@@ -86,7 +89,7 @@ int main(void) {
             printf("timeoout");
         }
 
-        // printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
+        printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
 
 
         esc::thrust();
