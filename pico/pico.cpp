@@ -51,10 +51,10 @@ int main(void) {
 
     sleep_ms(1000);
 
+    printf("program initiating\n");
+
     // raspi::init();
     // raspi::blockforMPU();
-
-    printf("program initiating\n");
 
     imu::init();
     presens::init();
@@ -79,27 +79,28 @@ int main(void) {
             stb_flag = false;
             imu::update();
             presens::read();
+            printf("%f  ", state.z);
             control::stbUpdate();
-            // raspi::sendpres();
+            raspi::sendpres();
         }
 
         nav_data_flag = raspi::update();
 
-        if (nav_data_flag) {
-            new_nav_data_time = get_absolute_time();
-            float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
-            last_nav_data_time = new_nav_data_time;
-            nav_time_out = false;
-            // control::navUpdate(nav_dt);
-            printf("%f      %f      %f\n", state.dx, state.dyaw, state.ref_z);
-        }
-        if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
-            // control::navStop();
-            nav_time_out = true;
-            printf("timeoout");
-        }
+        // if (nav_data_flag) {
+        //     new_nav_data_time = get_absolute_time();
+        //     float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
+        //     last_nav_data_time = new_nav_data_time;
+        //     nav_time_out = false;
+        //     // control::navUpdate(nav_dt);
+        //     // printf("%f      %f      %f\n", state.dx, state.dyaw, state.ref_z);
+        // }
+        // if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
+        //     // control::navStop();
+        //     nav_time_out = true;
+        //     printf("timeoout");
+        // }
 
-        // printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
+        printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
 
         esc::thrust();
     }

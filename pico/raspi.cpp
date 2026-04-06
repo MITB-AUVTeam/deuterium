@@ -31,8 +31,13 @@ void raspi::init() {
 }
 
 void raspi::blockforMPU() {
+    absolute_time_t last_nav_data_time = get_absolute_time();
     for (;;) {
         uint8_t b0 = uart_getc(RASPI_UARTID);
+        // if (absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
+        //     raspi::blockforMPU();
+        //     return;
+        // }
         uint8_t b1 = uart_getc(RASPI_UARTID);
         if (b0 == RASPI_SOF0 && b1 == RASPI_SOF1) {
             sleep_ms(100);

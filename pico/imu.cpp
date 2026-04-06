@@ -109,41 +109,41 @@ void imu::update() {
     // printf("%f\t%f\n", state.roll, state.pitch);
 }
 
-void imu::handleFail() {
-    printf("IMU FAIL - recovering...\n");
+// void imu::handleFail() {
+//     printf("IMU FAIL - recovering...\n");
 
-    // Step 1: Deinit I2C
-    i2c_deinit(BNO055_PORT);
-    sleep_ms(10);
+//     // Step 1: Deinit I2C
+//     i2c_deinit(BNO055_PORT);
+//     sleep_ms(10);
 
-    // Step 2: Force bus recovery (free SDA)
-    gpio_init(BNO055_SCL);
-    gpio_set_dir(BNO055_SCL, GPIO_OUT);
-    gpio_put(BNO055_SCL, 1);
+//     // Step 2: Force bus recovery (free SDA)
+//     gpio_init(BNO055_SCL);
+//     gpio_set_dir(BNO055_SCL, GPIO_OUT);
+//     gpio_put(BNO055_SCL, 1);
 
-    gpio_init(BNO055_SDA);
-    gpio_set_dir(BNO055_SDA, GPIO_IN);
+//     gpio_init(BNO055_SDA);
+//     gpio_set_dir(BNO055_SDA, GPIO_IN);
 
-    for (int i = 0; i < 50; i++) {
-        if (gpio_get(BNO055_SDA)) break;
+//     for (int i = 0; i < 50; i++) {
+//         if (gpio_get(BNO055_SDA)) break;
 
-        gpio_put(BNO055_SCL, 0);
-        sleep_us(5);
-        gpio_put(BNO055_SCL, 1);
-        sleep_us(5);
-    }
+//         gpio_put(BNO055_SCL, 0);
+//         sleep_us(5);
+//         gpio_put(BNO055_SCL, 1);
+//         sleep_us(5);
+//     }
 
-    // Step 3: Re-init I2C
-    i2c_init(BNO055_PORT, 100 * 1000);
-    gpio_set_function(BNO055_SDA, GPIO_FUNC_I2C);
-    gpio_set_function(BNO055_SCL, GPIO_FUNC_I2C);
-    gpio_pull_up(BNO055_SDA);
-    gpio_pull_up(BNO055_SCL);
+//     // Step 3: Re-init I2C
+//     i2c_init(BNO055_PORT, 100 * 1000);
+//     gpio_set_function(BNO055_SDA, GPIO_FUNC_I2C);
+//     gpio_set_function(BNO055_SCL, GPIO_FUNC_I2C);
+//     gpio_pull_up(BNO055_SDA);
+//     gpio_pull_up(BNO055_SCL);
 
-    sleep_ms(10);
+//     sleep_ms(10);
 
-    // Step 4: Re-init IMU
-    init();
+//     // Step 4: Re-init IMU
+//     init();
 
-    printf("IMU recovered\n");
-}
+//     printf("IMU recovered\n");
+// }

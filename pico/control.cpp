@@ -250,9 +250,9 @@ void control::stbUpdate()
 
     // ---------- Z CONTROL ----------
 
-    // float z_error = 0;
+    float z_error = 0.0;
 
-    float Fz_pid = computePID(pid_z, state.z);
+    float Fz_pid = computePID(pid_z, z_error);
 
     //float Fz = Fz_eq + Fz_pid
     float Fz = Fz_pid;
