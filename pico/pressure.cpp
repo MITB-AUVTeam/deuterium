@@ -222,5 +222,6 @@ void presens::read() {
     calculate();
 
     state.z = depth();
+    state.z=0;
     state.z += 1;
 }

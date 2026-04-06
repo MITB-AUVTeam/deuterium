@@ -39,19 +39,27 @@ int main(void) {
 
     stdio_init_all();
 
-    // sleep_ms(180000); 
+    sleep_ms(1000); 
+    gpio_init(4);
+    gpio_set_dir(4, true);
+    bool dummy = true;
+    while (!stdio_usb_connected()) {
+        sleep_ms(100);
+        gpio_put(4, dummy);
+        dummy = !dummy;
+    }
 
     sleep_ms(1000);
-    //raspi::init();
-    //raspi::blockforMPU();
 
-    printf("program initiating\n");
-
-    for(;;) control::stbUpdate();
+    // raspi::init();
+    // raspi::blockforMPU();
+    
+    printf("program initiating\n");h
 
     imu::init();
     presens::init();
-
+    control::init();
+    
     esc::pio_init();
     esc::arm();
     esc::mode3d();
@@ -68,6 +76,7 @@ int main(void) {
     for (;;) {
 
         if (stb_flag) {
+            //printf("Loop\n");
             stb_flag = false;
             imu::update();
             presens::read();

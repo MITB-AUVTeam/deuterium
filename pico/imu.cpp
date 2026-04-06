@@ -23,7 +23,7 @@ uint8_t buffer[6];
 
 void imu::init() {
 
-    i2c_init(BNO055_PORT, 400 * 1000);
+    i2c_init(BNO055_PORT, 100 * 1000);
     gpio_set_function(BNO055_SDA, GPIO_FUNC_I2C);
     gpio_set_function(BNO055_SCL, GPIO_FUNC_I2C);
     gpio_pull_up(BNO055_SDA);
@@ -34,7 +34,7 @@ void imu::init() {
 
     while (chipID != 0xA0) {
         printf("BNO055 not connected\n");
-        i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg, 1, true);
+        i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg, 1, false);
         i2c_read_blocking(BNO055_PORT, BNO055_ADDR, &chipID, 1, false);
         sleep_ms(500);
     }
@@ -66,38 +66,43 @@ void imu::init() {
 
     // read roll and pitch for lock values
     uint8_t reg_euler = 0x1A;
-    i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg_euler, 1, true);
+    
+    i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg_euler, 1, false);
     i2c_read_blocking(BNO055_PORT, BNO055_ADDR, buffer, 6, false);
     int16_t raw_roll0 = (int16_t)((buffer[3] << 8) | buffer[2]);
     int16_t raw_pitch0 = (int16_t)((buffer[5] << 8) | buffer[4]);
     int16_t raw_yaw0 = (int16_t)((buffer[1] << 8) | buffer[0]);
     roll0 = (raw_roll0 / 900.0f);
     pitch0 = (raw_pitch0 / 900.0f);
-
+   
     printf("Roll, Pitch, Yaw locked\n");
 }
 
 void imu::update() {
 
     uint8_t reg_euler = 0x1A;
-    i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg_euler, 1, true);
+    
+    i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg_euler, 1, false);
     i2c_read_blocking(BNO055_PORT, BNO055_ADDR, buffer, 6, false);
+
     int16_t raw_roll = (int16_t)((buffer[3] << 8) | buffer[2]);
     int16_t raw_pitch = (int16_t)((buffer[5] << 8) | buffer[4]);
     int16_t raw_yaw = (int16_t)((buffer[1] << 8) | buffer[0]);
     state.roll = (raw_roll / 900.0f);
     state.pitch = (raw_pitch / 900.0f);
-
+   
     state.roll = wrapAngle(state.roll - (roll0 + state.ref_roll));
     state.pitch = wrapAngle(state.pitch - pitch0);
-
+    
     // Deadband for small angles
     // if (std::abs(state.roll) < 0.05f) state.roll = 0;
     // if (std::abs(state.pitch) < 0.05f) state.pitch = 0;
 
     uint8_t reg_gyro = 0x14;
-    i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg_gyro, 1, true);
+    i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg_gyro, 1, false);
+
     i2c_read_blocking(BNO055_PORT, BNO055_ADDR, buffer, 6, false);
+
     int16_t raw_wx = (int16_t)((buffer[1] << 8) | buffer[0]);
     int16_t raw_wy = (int16_t)((buffer[3] << 8) | buffer[2]);
     int16_t raw_wz = (int16_t)((buffer[5] << 8) | buffer[4]);
@@ -114,5 +119,44 @@ void imu::update() {
     // wy_filt_last = state.wy;
     // wz_filt_last = state.wz;
 
-    // printf("%f      %f      %f      %f      %f\n", state.roll, state.pitch, state.wx, state.wy, state.wz);
+    // printf("%f\t%f\n", state.roll, state.pitch);
+}
+
+void imu::handleFail() {
+    printf("IMU FAIL - recovering...\n");
+
+    // Step 1: Deinit I2C
+    i2c_deinit(BNO055_PORT);
+    sleep_ms(10);
+
+    // Step 2: Force bus recovery (free SDA)
+    gpio_init(BNO055_SCL);
+    gpio_set_dir(BNO055_SCL, GPIO_OUT);
+    gpio_put(BNO055_SCL, 1);
+
+    gpio_init(BNO055_SDA);
+    gpio_set_dir(BNO055_SDA, GPIO_IN);
+
+    for (int i = 0; i < 50; i++) {
+        if (gpio_get(BNO055_SDA)) break;
+
+        gpio_put(BNO055_SCL, 0);
+        sleep_us(5);
+        gpio_put(BNO055_SCL, 1);
+        sleep_us(5);
+    }
+
+    // Step 3: Re-init I2C
+    i2c_init(BNO055_PORT, 100 * 1000);
+    gpio_set_function(BNO055_SDA, GPIO_FUNC_I2C);
+    gpio_set_function(BNO055_SCL, GPIO_FUNC_I2C);
+    gpio_pull_up(BNO055_SDA);
+    gpio_pull_up(BNO055_SCL);
+
+    sleep_ms(10);
+
+    // Step 4: Re-init IMU
+    init();
+
+    printf("IMU recovered\n");
 }

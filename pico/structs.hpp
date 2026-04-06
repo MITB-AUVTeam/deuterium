@@ -2,7 +2,7 @@
 #pragma once
 
 struct State {
-    float roll, pitch, z;
+    float roll, pitch, yaw, z;
     float ref_roll, ref_z;
     float wx, wy, wz;
     float dx, dy, dyaw;
