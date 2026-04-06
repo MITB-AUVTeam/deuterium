@@ -39,7 +39,7 @@ int main(void) {
 
     stdio_init_all();
 
-    sleep_ms(1000); 
+    sleep_ms(1000);
     gpio_init(4);
     gpio_set_dir(4, true);
     bool dummy = true;
@@ -53,13 +53,13 @@ int main(void) {
 
     // raspi::init();
     // raspi::blockforMPU();
-    
-    printf("program initiating\n");h
+
+    printf("program initiating\n");
 
     imu::init();
     presens::init();
     control::init();
-    
+
     esc::pio_init();
     esc::arm();
     esc::mode3d();
