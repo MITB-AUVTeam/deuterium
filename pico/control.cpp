@@ -22,15 +22,15 @@ struct PID
     float ref;
 };
 
-PID pid_roll = {100, 50, 20, 0, 0, 0};
+PID pid_roll = { 100, 50, 20, 0, 0, 0 };
 
-PID pid_pitch = {-100, -50, 20, 0, 0, 0};
+PID pid_pitch = { -100, -50, 20, 0, 0, 0 };
 
-PID pid_z = {0, 0, 0, 0, 0, 0};
+PID pid_z = { 0, 0, 0, 0, 0, 0 };
 
-PID pid_yaw = {0, 0, 0, 0, 0, 0};
+PID pid_yaw = { 0, 0, 0, 0, 0, 0 };
 
-PID *tune = &pid_pitch;
+PID* tune = &pid_pitch;
 
 // LQR
 
@@ -46,7 +46,7 @@ float K_tau[2][2] = {
 
 const float dt = STB_LOOP_MS / 1000.0f;
 
-float u_smooth[3] = {0, 0, 0};
+float u_smooth[3] = { 0, 0, 0 };
 
 const float U_MAX = 1.0;
 
@@ -96,12 +96,12 @@ float constrain(float v, float lo, float hi)
 {
 
     return (v < lo) ? lo : (v > hi) ? hi
-                                    : v;
+        : v;
 }
 
-float computePID(PID &p, float val)
+float computePID(PID& p, float val)
 {
-    if(thrusterOff) return 0;
+    if (thrusterOff) return 0;
     float error = p.ref - val;
 
     p.integral += error * dt;
@@ -112,26 +112,19 @@ float computePID(PID &p, float val)
 
     float output = p.kp * error +
 
-                   p.ki * p.integral +
+        p.ki * p.integral +
 
-                   p.kd * derivative;
+        p.kd * derivative;
 
     p.prev = error;
 
     return output;
 }
 
-void applyDeadband(float &val)
-{
-
-    if (fabs(val) < 0.01)
-        val = 0;
-}
-
 void control::init()
 {
 
-    thrusterOff = true;
+    thrusterOff = false;
 
     pidUpdate = false;
 }
@@ -203,7 +196,7 @@ void control::stbUpdate()
 
                     pidUpdate = false;
                 }
-                else if(args == 0) {
+                else if (args == 0) {
                     printf("No update\n");
                     pidUpdate = false;
                 }
@@ -221,7 +214,7 @@ void control::stbUpdate()
                 {
                     tune->ref = ref;
                     printf("Parsed: %f\n", tune->ref);
-                } 
+                }
                 refUpdate = false;
             }
 
@@ -251,13 +244,9 @@ void control::stbUpdate()
 
     float omega_err_y = state.wy - wy_ref;
 
-    // applyDeadband(omega_err_x);
+    float tau_roll = -tau_scale * (K_tau[0][0] * omega_err_x + K_tau[0][1] * omega_err_y);
 
-    // applyDeadband(omega_err_y);
-
-    float tau_roll = -tau_scale*(K_tau[0][0] * omega_err_x + K_tau[0][1] * omega_err_y);
-
-    float tau_pitch = -tau_scale*(K_tau[1][0] * omega_err_x + K_tau[1][1] * omega_err_y);
+    float tau_pitch = -tau_scale * (K_tau[1][0] * omega_err_x + K_tau[1][1] * omega_err_y);
 
     // ---------- Z CONTROL ----------
 
@@ -285,28 +274,28 @@ void control::stbUpdate()
     F3 = constrain(F3, F_MIN, F_MAX);
 
     if (!thrusterOff)
-        printf("%f\t%f\t\t%f\t%f\t%f\n", state.roll, state.pitch, F1, F2, F3);
+        // printf("%f\t%f\t\t%f\t%f\t%f\n", state.roll, state.pitch, F1, F2, F3);
 
     // ---------- LUT â†’ DSHOT ----------
 
-    if (thrusterOff)
-    {
+        if (thrusterOff)
+        {
 
-        throttle.VL = thrustToDshot(0);
+            throttle.VL = thrustToDshot(0);
 
-        throttle.VR = thrustToDshot(0);
+            throttle.VR = thrustToDshot(0);
 
-        throttle.VB = thrustToDshot(0);
+            throttle.VB = thrustToDshot(0);
 
-        return;
-    }
-    else
-    {
+            return;
+        }
+        else
+        {
 
-        throttle.VL = thrustToDshot(F3);
+            throttle.VL = thrustToDshot(F3);
 
-        throttle.VR = thrustToDshot(F2);
+            throttle.VR = thrustToDshot(F2);
 
-        throttle.VB = thrustToDshot(F1);
-    }
+            throttle.VB = thrustToDshot(F1);
+        }
 }

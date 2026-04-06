@@ -76,12 +76,11 @@ int main(void) {
     for (;;) {
 
         if (stb_flag) {
-            //printf("Loop\n");
             stb_flag = false;
             imu::update();
             presens::read();
             control::stbUpdate();
-            raspi::sendpres();
+            // raspi::sendpres();
         }
 
         nav_data_flag = raspi::update();
@@ -100,10 +99,8 @@ int main(void) {
             printf("timeoout");
         }
 
-        printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
-
+        // printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
 
         esc::thrust();
     }
-
 }

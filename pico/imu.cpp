@@ -93,10 +93,6 @@ void imu::update() {
    
     state.roll = wrapAngle(state.roll - (roll0 + state.ref_roll));
     state.pitch = wrapAngle(state.pitch - pitch0);
-    
-    // Deadband for small angles
-    // if (std::abs(state.roll) < 0.05f) state.roll = 0;
-    // if (std::abs(state.pitch) < 0.05f) state.pitch = 0;
 
     uint8_t reg_gyro = 0x14;
     i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg_gyro, 1, false);
@@ -109,15 +105,6 @@ void imu::update() {
     state.wx = raw_wx / 900.0f;
     state.wy = raw_wy / 900.0f;
     state.wz = raw_wz / 900.0f;
-
-
-    //low pass filter
-    // state.wx = alpha * state.wx + (1 - alpha) * wx_filt_last;
-    // state.wy = alpha * state.wy + (1 - alpha) * wy_filt_last;
-    // state.wz = alpha * state.wz + (1 - alpha) * wz_filt_last;
-    // wx_filt_last = state.wx;
-    // wy_filt_last = state.wy;
-    // wz_filt_last = state.wz;
 
     // printf("%f\t%f\n", state.roll, state.pitch);
 }
