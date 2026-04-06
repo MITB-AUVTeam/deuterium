@@ -10,6 +10,24 @@
 
 int fd = 0;
 
+uint16_t calccrc(uint8_t* data) {
+  uint16_t crc = 0xFFFF;   // initial value
+
+  for (uint16_t i = 0; i < 13; i++) {
+    crc ^= (uint16_t)data[i] << 8;
+
+    for (uint8_t j = 0; j < 8; j++) {
+      if (crc & 0x8000)
+        crc = (crc << 1) ^ 0x1021;
+      else
+        crc <<= 1;
+    }
+  }
+
+  return crc;
+}
+
+
 void uartInit() {
   const char* port = "/dev/ttyAMA0";
 
@@ -62,10 +80,28 @@ void startMCU() {
   }
 }
 
+void sendNav(float dx, float dyaw, float ref_z, uint8_t id) {
+  uint8_t buffer[17];
+
+  buffer[0] = RASPI_SOF0;
+  buffer[1] = RASPI_SOF1;
+
+  buffer[2] = id;
+  std::memcpy(&buffer[3], &dx, 4);
+  std::memcpy(&buffer[7], &dyaw, 4);
+  std::memcpy(&buffer[11], &ref_z, 4);
+
+  uint16_t crc = calccrc(&buffer[2]);
+
+  buffer[15] = crc & 0xFF;
+  buffer[16] = (crc >> 8) & 0xFF;
+
+  write(fd, buffer, 17);
+}
+
 void readDepth() {
   uint8_t b, prev = 0;
 
-  // find sof
   for (;;) {
     if (read(fd, &b, 1) == 1) {
       if (prev == 0xAA && b == 0x55)
@@ -93,6 +129,7 @@ int main() {
   std::cout << "success\n";
 
   for (;;) {
+    sendNav(1.1, 2.2, 3.3, 1);
     readDepth();
   }
 

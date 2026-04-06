@@ -53,11 +53,11 @@ int main(void) {
 
     printf("program initiating\n");
 
-    // raspi::init();
-    // raspi::blockforMPU();
+    raspi::init();
+    raspi::blockforMPU();
 
     imu::init();
-    presens::init();
+    // presens::init();
     control::init();
 
     esc::pio_init();
@@ -78,30 +78,33 @@ int main(void) {
         if (stb_flag) {
             stb_flag = false;
             imu::update();
-            presens::read();
-            printf("%f  ", state.z);
+            // presens::read();
+            state.z = 0.25;
+            // printf("%f  ", state.z);
             control::stbUpdate();
-            raspi::sendpres();
         }
 
         nav_data_flag = raspi::update();
+        printf("%f      %f      %f\n", state.dx, state.dyaw, state.ref_z);
+        raspi::sendpres();
 
-        // if (nav_data_flag) {
-        //     new_nav_data_time = get_absolute_time();
-        //     float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
-        //     last_nav_data_time = new_nav_data_time;
-        //     nav_time_out = false;
-        //     // control::navUpdate(nav_dt);
-        //     // printf("%f      %f      %f\n", state.dx, state.dyaw, state.ref_z);
-        // }
-        // if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
-        //     // control::navStop();
-        //     nav_time_out = true;
-        //     printf("timeoout");
-        // }
+        if (nav_data_flag) {
+            new_nav_data_time = get_absolute_time();
+            float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
+            last_nav_data_time = new_nav_data_time;
+            nav_time_out = false;
+            // control::navUpdate(nav_dt);
+        }
+        if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
+            // control::navStop();
+            nav_time_out = true;
+            printf("timeoout");
+        }
 
-        printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
+        // printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
 
         esc::thrust();
+
+        sleep_us(750);
     }
 }

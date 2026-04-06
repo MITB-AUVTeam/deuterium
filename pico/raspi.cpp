@@ -31,20 +31,17 @@ void raspi::init() {
 }
 
 void raspi::blockforMPU() {
-    absolute_time_t last_nav_data_time = get_absolute_time();
+    uint8_t prev = 0;
     for (;;) {
-        uint8_t b0 = uart_getc(RASPI_UARTID);
-        // if (absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
-        //     raspi::blockforMPU();
-        //     return;
-        // }
-        uint8_t b1 = uart_getc(RASPI_UARTID);
-        if (b0 == RASPI_SOF0 && b1 == RASPI_SOF1) {
+        uint8_t curr = uart_getc(RASPI_UARTID);
+        if (prev == RASPI_SOF0 && curr == RASPI_SOF1) {
             sleep_ms(100);
             uart_putc(RASPI_UARTID, RASPI_SOF0);
             uart_putc(RASPI_UARTID, RASPI_SOF1);
             return;
         }
+
+        prev = curr;
     }
 }
 
