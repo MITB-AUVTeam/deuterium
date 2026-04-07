@@ -92,11 +92,11 @@ int main(void) {
             float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
             last_nav_data_time = new_nav_data_time;
             nav_time_out = false;
-            // control::navUpdate(nav_dt);
+            control::navUpdate(nav_dt);
             printf("%f      %f      %f\n", state.dx, state.dyaw, state.ref_z);
         }
         if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
-            // control::navStop();
+            control::navStop();
             nav_time_out = true;
             printf("timeoout");
         }

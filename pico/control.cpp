@@ -299,3 +299,13 @@ void control::stbUpdate()
             throttle.VB = thrustToDshot(F1);
         }
 }
+
+void control::navUpdate(float nav_dt) {
+    throttle.HL = state.dx + state.dyaw;
+    throttle.HR = state.dx - state.dyaw;
+}
+
+void control::navStop() {
+    throttle.HL = 48;
+    throttle.HR = 48;
+}
