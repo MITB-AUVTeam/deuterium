@@ -26,7 +26,7 @@ PID pid_roll = { 100, 50, 20, 0, 0, 0 };
 
 PID pid_pitch = { -100, -50, 20, 0, 0, 0 };
 
-PID pid_z = { 0, 0, 0, 0, 0, 0 };
+PID pid_z = { 300, 50, 150, 0, 0, 0 };
 
 PID pid_yaw = { 0, 0, 0, 0, 0, 0 };
 
@@ -50,13 +50,7 @@ float u_smooth[3] = { 0, 0, 0 };
 
 const float U_MAX = 1.0;
 
-const float m = 20.0;
-
-const float g = 9.8;
-
-const float Fb = 250;
-
-const float Fz_eq = m * g - Fb;
+const float Fz_eq =-33.5;
 
 const float F_MIN = -23.3f;
 
@@ -68,11 +62,11 @@ const float tau_scale = 1.0f;
 
 const float XtoF[3][3] = {
 
-    {0, -2.0000, 0.5600},
+    {0, -2.0000, 0.1},
 
-    {-2.2222, 1.0000, 0.2200},
+    {-2.2222, 1.0000, 0.30},
 
-    {2.2222, 1.0000, 0.2200}
+    {2.2222, 1.0000, 0.30}
 
 };
 
@@ -250,20 +244,26 @@ void control::stbUpdate()
 
     // ---------- Z CONTROL ----------
 
-    float z_error = 0.0;
+    float z_error = state.z-0.25;
 
     float Fz_pid = computePID(pid_z, z_error);
 
-    //float Fz = Fz_eq + Fz_pid
-    float Fz = Fz_pid;
+    float Fz = Fz_eq + Fz_pid;
+    // float Fz = Fz_eq;
 
     // ---------- XtoF MIXING ----------
 
-    float F1 = XtoF[0][0] * tau_roll + XtoF[0][1] * tau_pitch + XtoF[0][2] * Fz;
+    // float F1 = XtoF[0][0] * tau_roll + XtoF[0][1] * tau_pitch + XtoF[0][2] * Fz;
 
-    float F2 = XtoF[1][0] * tau_roll + XtoF[1][1] * tau_pitch + XtoF[1][2] * Fz;
+    // float F2 = XtoF[1][0] * tau_roll + XtoF[1][1] * tau_pitch + XtoF[1][2] * Fz;
 
-    float F3 = XtoF[2][0] * tau_roll + XtoF[2][1] * tau_pitch + XtoF[2][2] * Fz;
+    // float F3 = XtoF[2][0] * tau_roll + XtoF[2][1] * tau_pitch + XtoF[2][2] * Fz;
+
+    float F1 = XtoF[0][2] * Fz;
+
+    float F2 = XtoF[1][2] * Fz;
+
+    float F3 = XtoF[2][2] * Fz;
 
     // ---------- SATURATION ----------
 

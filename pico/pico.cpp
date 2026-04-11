@@ -39,15 +39,15 @@ int main(void) {
 
     stdio_init_all();
 
-    sleep_ms(1000);
-    gpio_init(4);
-    gpio_set_dir(4, true);
-    bool dummy = true;
-    while (!stdio_usb_connected()) {
-        sleep_ms(100);
-        gpio_put(4, dummy);
-        dummy = !dummy;
-    }
+    // sleep_ms(1000);
+    // gpio_init(4);
+    // gpio_set_dir(4, true);
+    // bool dummy = true;
+    // while (!stdio_usb_connected()) {
+    //     sleep_ms(100);
+    //     gpio_put(4, dummy);
+    //     dummy = !dummy;
+    // }
 
     sleep_ms(1000);
 
@@ -57,7 +57,7 @@ int main(void) {
     raspi::blockforMPU();
 
     imu::init();
-    // presens::init();
+    presens::init();
     control::init();
 
     esc::pio_init();
@@ -78,8 +78,8 @@ int main(void) {
         if (stb_flag) {
             stb_flag = false;
             imu::update();
-            // presens::read();
-            state.z = 0.25;
+            presens::read();
+            // state.z = 0.25;
             // printf("%f  ", state.z);
             control::stbUpdate();
         }

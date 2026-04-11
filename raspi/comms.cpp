@@ -129,7 +129,7 @@ int main() {
   std::cout << "success\n";
 
   for (;;) {
-    sendNav(1.1, 2.2, 3.3, 1);
+    sendNav(1350, 0, 0, 1);
     readDepth();
   }
 
