@@ -50,7 +50,7 @@ float u_smooth[3] = { 0, 0, 0 };
 
 const float U_MAX = 1.0;
 
-const float Fz_eq =-33.5;
+const float Fz_eq = -33.5;
 
 const float F_MIN = -23.3f;
 
@@ -244,7 +244,7 @@ void control::stbUpdate()
 
     // ---------- Z CONTROL ----------
 
-    float z_error = state.z-0.25;
+    float z_error = state.z - 0.25;
 
     float Fz_pid = computePID(pid_z, z_error);
 
@@ -292,7 +292,7 @@ void control::stbUpdate()
         else
         {
 
-            throttle.VL = thrustToDshot(F3);
+            throttle.VL = thrustToDshot(-F3);
 
             throttle.VR = thrustToDshot(F2);
 
