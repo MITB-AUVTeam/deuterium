@@ -8,19 +8,13 @@ extern State state;
 
 extern Throttle throttle;
 
-// ================= PID =================
-struct PID
-{
 
+struct PID {
     float kp, ki, kd;
-
     float prev;
-
     float integral;
-
     float ref;
 };
-
 PID pid_roll = { 100, 50, 20, 0, 0, 0 };
 PID pid_pitch = { -100, -50, 20, 0, 0, 0 };
 PID pid_z = { 300, 50, 150, 0, 0, 0 };
@@ -33,9 +27,8 @@ float K_tau[2][2] = {
     {0, 0.2876}
 };
 
-// ================= CONSTANTS =================
-const float STB_DT = STB_LOOP_MS / 1000.0f;
-
+// constants
+const float STB_LOOP_DT = STB_LOOP_MS / 1000.0f;
 float u_smooth[3] = { 0, 0, 0 };
 const float U_MAX = 1.0;
 const float Fz_eq = -33.5;
@@ -43,8 +36,7 @@ const float F_MIN = -23.3f;
 const float F_MAX = 29.8f;
 const float tau_scale = 1.0f;
 
-// ================= XtoF MATRIX =================
-
+//XtoF MATRIX
 const float XtoF[3][3] = {
     {0, -2.0000, 0.1},
     {-2.2222, 1.0000, 0.30},
@@ -54,9 +46,7 @@ const float XtoF[3][3] = {
 // Globals
 
 bool thrusterOff;
-
 bool pidUpdate;
-
 bool refUpdate;
 
 #define BUF_SIZE 512
@@ -65,17 +55,13 @@ static char input_buf[BUF_SIZE];
 
 static int buf_idx = 0;
 
-// ================= HELPERS =================
 
-float constrain(float v, float lo, float hi)
-{
-
+float constrain(float v, float lo, float hi) {
     return (v < lo) ? lo : (v > hi) ? hi
         : v;
 }
 
-float computePID(PID& p, float val, float dt)
-{
+float computePID(PID& p, float val, float dt) {
     if (thrusterOff) return 0;
     float error = p.ref - val;
 
@@ -96,17 +82,12 @@ float computePID(PID& p, float val, float dt)
     return output;
 }
 
-void control::init()
-{
-
+void control::init() {
     thrusterOff = false;
-
     pidUpdate = false;
 }
 
-void control::stbUpdate()
-{
-
+void control::stbUpdate() {
     int c;
 
     while ((c = getchar_timeout_us(0)) != PICO_ERROR_TIMEOUT)
@@ -209,9 +190,9 @@ void control::stbUpdate()
 
     // ---------- OUTER LOOP (ANGLE â†’ Ï‰_ref) ----------
 
-    float wx_ref = computePID(pid_roll, state.roll, STB_DT);
+    float wx_ref = computePID(pid_roll, state.roll, STB_LOOP_DT);
 
-    float wy_ref = computePID(pid_pitch, state.pitch, STB_DT);
+    float wy_ref = computePID(pid_pitch, state.pitch, STB_LOOP_DT);
 
     // ---------- INNER LOOP (LQR) ----------
 
@@ -227,7 +208,7 @@ void control::stbUpdate()
 
     float z_error = state.z - state.ref_z;
 
-    float Fz_pid = computePID(pid_z, z_error, STB_DT);
+    float Fz_pid = computePID(pid_z, z_error, STB_LOOP_DT);
 
     float Fz = Fz_eq + Fz_pid;
     // float Fz = Fz_eq;
@@ -235,15 +216,11 @@ void control::stbUpdate()
     // ---------- XtoF MIXING ----------
 
     // float F1 = XtoF[0][0] * tau_roll + XtoF[0][1] * tau_pitch + XtoF[0][2] * Fz;
-
     // float F2 = XtoF[1][0] * tau_roll + XtoF[1][1] * tau_pitch + XtoF[1][2] * Fz;
-
     // float F3 = XtoF[2][0] * tau_roll + XtoF[2][1] * tau_pitch + XtoF[2][2] * Fz;
 
     float F1 = XtoF[0][2] * Fz;
-
     float F2 = XtoF[1][2] * Fz;
-
     float F3 = XtoF[2][2] * Fz;
 
     // ---------- SATURATION ----------
