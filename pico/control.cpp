@@ -9,7 +9,6 @@ extern State state;
 extern Throttle throttle;
 
 // ================= PID =================
-
 struct PID
 {
 
@@ -23,51 +22,33 @@ struct PID
 };
 
 PID pid_roll = { 100, 50, 20, 0, 0, 0 };
-
 PID pid_pitch = { -100, -50, 20, 0, 0, 0 };
-
 PID pid_z = { 300, 50, 150, 0, 0, 0 };
-
-PID pid_yaw = { 0, 0, 0, 0, 0, 0 };
-
+PID pid_yaw = { 10, 0, 0, 0, 0, 0 };
 PID* tune = &pid_pitch;
 
 // LQR
-
 float K_tau[2][2] = {
-
     {0.2969, 0},
-
     {0, 0.2876}
-
 };
 
 // ================= CONSTANTS =================
-
-const float dt = STB_LOOP_MS / 1000.0f;
+const float STB_DT = STB_LOOP_MS / 1000.0f;
 
 float u_smooth[3] = { 0, 0, 0 };
-
 const float U_MAX = 1.0;
-
 const float Fz_eq = -33.5;
-
 const float F_MIN = -23.3f;
-
 const float F_MAX = 29.8f;
-
 const float tau_scale = 1.0f;
 
 // ================= XtoF MATRIX =================
 
 const float XtoF[3][3] = {
-
     {0, -2.0000, 0.1},
-
     {-2.2222, 1.0000, 0.30},
-
     {2.2222, 1.0000, 0.30}
-
 };
 
 // Globals
@@ -93,7 +74,7 @@ float constrain(float v, float lo, float hi)
         : v;
 }
 
-float computePID(PID& p, float val)
+float computePID(PID& p, float val, float dt)
 {
     if (thrusterOff) return 0;
     float error = p.ref - val;
@@ -228,9 +209,9 @@ void control::stbUpdate()
 
     // ---------- OUTER LOOP (ANGLE â†’ Ï‰_ref) ----------
 
-    float wx_ref = computePID(pid_roll, state.roll);
+    float wx_ref = computePID(pid_roll, state.roll, STB_DT);
 
-    float wy_ref = computePID(pid_pitch, state.pitch);
+    float wy_ref = computePID(pid_pitch, state.pitch, STB_DT);
 
     // ---------- INNER LOOP (LQR) ----------
 
@@ -244,9 +225,9 @@ void control::stbUpdate()
 
     // ---------- Z CONTROL ----------
 
-    float z_error = state.z - 0.25;
+    float z_error = state.z - state.ref_z;
 
-    float Fz_pid = computePID(pid_z, z_error);
+    float Fz_pid = computePID(pid_z, z_error, STB_DT);
 
     float Fz = Fz_eq + Fz_pid;
     // float Fz = Fz_eq;
@@ -300,9 +281,21 @@ void control::stbUpdate()
         }
 }
 
+float velocityToKgf(float v) {
+    const float k_drag = 5.0f;  // tune this
+
+    float force_N = k_drag * v * v;
+    return force_N / 9.80665f;
+}
+
 void control::navUpdate(float nav_dt) {
-    throttle.HL = state.dx + state.dyaw;
-    throttle.HR = state.dx - state.dyaw;
+
+    throttle.HL = velocityToKgf(state.vx) + computePID(pid_yaw, state.dyaw, nav_dt);
+    throttle.HR = velocityToKgf(state.vx) - computePID(pid_yaw, state.dyaw, nav_dt);
+
+    throttle.HL = thrustToDshot(throttle.HL);
+    throttle.HR = thrustToDshot(throttle.HR);
+
 }
 
 void control::navStop() {

@@ -5,13 +5,13 @@ struct State {
     float roll, pitch, yaw, z;
     float ref_roll, ref_z;
     float wx, wy, wz;
-    float dx, dy, dyaw;
+    float vx, dy, dyaw;
 
     State() {
         roll = pitch = z = 0;
         ref_roll = ref_z = 0;
         wx = wy = wz = 0;
-        dx = dy = dyaw = 0;
+        vx = dy = dyaw = 0;
     }
 };
 

@@ -72,7 +72,7 @@ bool raspi::update() {
                 uint16_t computedcrc = calccrc(recbuff);
                 if (reccrc == computedcrc) {
                     memcpy(&id, &recbuff[0], 1);
-                    memcpy(&state.dx, &recbuff[1], 4);
+                    memcpy(&state.vx, &recbuff[1], 4);
                     memcpy(&state.dyaw, &recbuff[5], 4);
                     memcpy(&state.ref_z, &recbuff[9], 4);
                 }

@@ -29,7 +29,7 @@ uint16_t calccrc(uint8_t* data) {
 
 
 void uartInit() {
-  const char* port = "/dev/ttyAMA0";
+  const char* port = "/dev/ttyTHS1";
 
   fd = open(port, O_RDWR | O_NOCTTY | O_SYNC);
   if (fd < 0) {
@@ -129,7 +129,7 @@ int main() {
   std::cout << "success\n";
 
   for (;;) {
-    sendNav(1350, 0, 0, 1);
+    sendNav(0, 0, 0.25, 1);
     readDepth();
   }
 

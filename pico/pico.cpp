@@ -39,15 +39,15 @@ int main(void) {
 
     stdio_init_all();
 
-    // sleep_ms(1000);
-    // gpio_init(4);
-    // gpio_set_dir(4, true);
-    // bool dummy = true;
-    // while (!stdio_usb_connected()) {
-    //     sleep_ms(100);
-    //     gpio_put(4, dummy);
-    //     dummy = !dummy;
-    // }
+    sleep_ms(1000);
+    gpio_init(4);
+    gpio_set_dir(4, true);
+    bool dummy = true;
+    while (!stdio_usb_connected()) {
+        sleep_ms(100);
+        gpio_put(4, dummy);
+        dummy = !dummy;
+    }
 
     sleep_ms(1000);
 
@@ -79,8 +79,6 @@ int main(void) {
             stb_flag = false;
             imu::update();
             presens::read();
-            // state.z = 0.25;
-            // printf("%f  ", state.z);
             control::stbUpdate();
         }
 
@@ -93,7 +91,7 @@ int main(void) {
             last_nav_data_time = new_nav_data_time;
             nav_time_out = false;
             control::navUpdate(nav_dt);
-            printf("%f      %f      %f\n", state.dx, state.dyaw, state.ref_z);
+            printf("%f      %f      %f\n", state.vx, state.dyaw, state.ref_z);
         }
         if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
             control::navStop();
