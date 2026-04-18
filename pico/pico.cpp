@@ -15,6 +15,8 @@
 #include "raspi.hpp"
 #include "pressure.hpp"
 
+#include "tusb.h"
+
 volatile bool stb_flag = false;
 bool nav_data_flag = false;
 bool nav_time_out = true;       //starts is safe consdition
@@ -53,11 +55,12 @@ int main(void) {
 
     printf("program initiating\n");
 
-    raspi::init();
-    raspi::blockforMPU();
+    // raspi::init();
+    // raspi::blockforMPU();
+    tusb_init();
 
-    imu::init();
-    presens::init();
+    // imu::init();
+    // presens::init();
     control::init();
 
     esc::pio_init();
@@ -75,31 +78,46 @@ int main(void) {
 
     for (;;) {
 
+        tud_task();
+
         if (stb_flag) {
             stb_flag = false;
-            imu::update();
-            presens::read();
+            // imu::update();
+            // presens::read();
             control::stbUpdate();
         }
 
-        nav_data_flag = raspi::update();
-        raspi::sendpres();
+        // nav_data_flag = raspi::update();
+        // raspi::sendpres();
 
-        if (nav_data_flag) {
-            new_nav_data_time = get_absolute_time();
-            float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
-            last_nav_data_time = new_nav_data_time;
-            nav_time_out = false;
-            control::navUpdate(nav_dt);
-            printf("%f      %f      %f\n", state.vx, state.dyaw, state.ref_z);
-        }
-        if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
-            control::navStop();
-            nav_time_out = true;
-            printf("timeoout");
+        // if (nav_data_flag) {
+        //     new_nav_data_time = get_absolute_time();
+        //     float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
+        //     last_nav_data_time = new_nav_data_time;
+        //     nav_time_out = false;
+        //     control::navUpdate(nav_dt);
+        //     printf("%f      %f      %f\n", state.vx, state.dyaw, state.ref_z);
+        // }
+        // if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
+        //     control::navStop();
+        //     nav_time_out = true;
+        //     printf("timeoout");
+        // }
+
+        if (tud_vendor_available() >= sizeof(float) * 3) {
+
+            float received[3];
+
+            tud_vendor_read(received, sizeof(received));
+
+            float x = received[0];
+            float y = received[1];
+            float z = received[2];
+
+            printf("%f  %f  %f    ", x, y, z);
         }
 
-        // printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
+        printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
 
         esc::thrust();
 
