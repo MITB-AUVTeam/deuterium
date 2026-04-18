@@ -1,19 +1,24 @@
 import usb.core
 import usb.util
-import struct
-import time
 
-# Find device (replace with your VID/PID)
 dev = usb.core.find(idVendor=0x2e8a, idProduct=0x000a)
 
 if dev is None:
     raise ValueError("Device not found")
 
-dev.set_configuration()
-
-# Endpoint (match your descriptor)
-
-EP_OUT = 0x01   # host → Pico
+# 🔥 DETACH kernel drivers FIRST
 for cfg in dev:
     for intf in cfg:
-        print("Interface:", intf.bInterfaceNumber)
+        if dev.is_kernel_driver_active(intf.bInterfaceNumber):
+            print("Detaching interface", intf.bInterfaceNumber)
+            dev.detach_kernel_driver(intf.bInterfaceNumber)
+
+# NOW safe
+dev.set_configuration()
+
+cfg = dev.get_active_configuration()
+
+# Use vendor interface (usually 1)
+intf = cfg[(1, 0)]
+
+usb.util.claim_interface(dev, intf.bInterfaceNumber)
