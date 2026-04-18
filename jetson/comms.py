@@ -22,3 +22,7 @@ cfg = dev.get_active_configuration()
 intf = cfg[(1, 0)]
 
 usb.util.claim_interface(dev, intf.bInterfaceNumber)
+
+for cfg in dev:
+    for intf in cfg:
+        print("Interface:", intf.bInterfaceNumber)
