@@ -99,7 +99,7 @@ void sendNav(float dx, float dyaw, float ref_z, uint8_t id) {
   write(fd, buffer, 17);
 }
 
-void readDepth() {
+float readDepth() {
   uint8_t b, prev = 0;
 
   for (;;) {
@@ -118,7 +118,7 @@ void readDepth() {
 
   float z;
   std::memcpy(&z, &raw, sizeof(z));
-  std::cout << z << "\n";
+  return z;
 }
 
 int main() {
@@ -130,7 +130,8 @@ int main() {
 
   for (;;) {
     sendNav(0, 0, 0.25, 1);
-    readDepth();
+    float z = readDepth();
+    std::cout << z << "\n";
   }
 
   close(fd);
