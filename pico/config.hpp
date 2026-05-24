@@ -3,6 +3,8 @@
 //stablization loop speed in milli seconds
 #define STB_LOOP_MS 20
 
+#define DEBUG_MODE 0
+
 //time out for navigation comms to be sent by raspi mpu in micro seconds
 #define NAV_TIME_OUT_US 500000
 

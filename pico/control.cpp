@@ -258,17 +258,10 @@ void control::stbUpdate() {
         }
 }
 
-float velocityToKgf(float v) {
-    const float k_drag = 5.0f;  // tune this
-
-    float force_N = k_drag * v * v;
-    return force_N / 9.80665f;
-}
-
 void control::navUpdate(float nav_dt) {
 
-    throttle.HL = velocityToKgf(state.vx) + computePID(pid_yaw, state.dyaw, nav_dt);
-    throttle.HR = velocityToKgf(state.vx) - computePID(pid_yaw, state.dyaw, nav_dt);
+    throttle.HL = computePID(pid_yaw, state.dyaw, nav_dt);
+    throttle.HR = -computePID(pid_yaw, state.dyaw, nav_dt);
 
     throttle.HL = thrustToDshot(throttle.HL);
     throttle.HR = thrustToDshot(throttle.HR);

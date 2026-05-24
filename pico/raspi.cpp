@@ -4,80 +4,74 @@ extern State state;
 
 int recstate = 0;
 int recbuffindex = 0;
-uint8_t recbuff[15];
-
-uint16_t calccrc(uint8_t* data) {
-    uint16_t crc = 0xFFFF;   // initial value
-
-    for (uint16_t i = 0; i < 13; i++) {
-        crc ^= (uint16_t)data[i] << 8;
-
-        for (uint8_t j = 0; j < 8; j++) {
-            if (crc & 0x8000)
-                crc = (crc << 1) ^ 0x1021;
-            else
-                crc <<= 1;
-        }
-    }
-
-    return crc;
-}
-
+uint8_t recbuff[13];
 
 void raspi::init() {
-    uart_init(RASPI_UARTID, RASPI_BAUDRATE);
-    gpio_set_function(RASPI_TX, GPIO_FUNC_UART);
-    gpio_set_function(RASPI_RX, GPIO_FUNC_UART);
+    stdio_usb_init();
+    while (!stdio_usb_connected()) {
+        sleep_ms(100);
+    }
 }
 
 void raspi::blockforMPU() {
     uint8_t prev = 0;
     for (;;) {
-        uint8_t curr = uart_getc(RASPI_UARTID);
-        if (prev == RASPI_SOF0 && curr == RASPI_SOF1) {
+        int c = getchar_timeout_us(0);
+        if (c == PICO_ERROR_TIMEOUT)
+            continue;
+        uint8_t curr = (uint8_t)c;
+        if (prev == RASPI_SOF0 &&
+            curr == RASPI_SOF1) {
             sleep_ms(100);
-            uart_putc(RASPI_UARTID, RASPI_SOF0);
-            uart_putc(RASPI_UARTID, RASPI_SOF1);
+            putchar_raw(RASPI_SOF0);
+            putchar_raw(RASPI_SOF1);
+            fflush(stdout);
             return;
         }
-
         prev = curr;
     }
 }
 
-uint8_t id = 0;
 
 bool raspi::update() {
 
-    while (uart_is_readable(RASPI_UARTID)) {
-        switch (recstate) {
+    while (true) {
+
+        int c = getchar_timeout_us(0);
+        if (c == PICO_ERROR_TIMEOUT)
+            break;
+        uint8_t byte = (uint8_t)c;
+
+        switch(recstate) {
 
         case 0:
-            if (uart_getc(RASPI_UARTID) == RASPI_SOF0)
+            if(byte == RASPI_SOF0)
                 recstate = 1;
             break;
 
         case 1:
-            if (uart_getc(RASPI_UARTID) == RASPI_SOF1)
+            if(byte == RASPI_SOF1) {
                 recstate = 2;
-            else
+                recbuffindex = 0;
+            }
+            else {
                 recstate = 0;
+            }
             break;
 
         case 2:
-            recbuff[recbuffindex] = uart_getc(RASPI_UARTID);
-            recbuffindex++;
-            if (recbuffindex >= 15) {
-                uint16_t reccrc = recbuff[13] | (recbuff[14] << 8);
-                uint16_t computedcrc = calccrc(recbuff);
-                if (reccrc == computedcrc) {
-                    memcpy(&id, &recbuff[0], 1);
-                    memcpy(&state.vx, &recbuff[1], 4);
-                    memcpy(&state.dyaw, &recbuff[5], 4);
-                    memcpy(&state.ref_z, &recbuff[9], 4);
-                }
+            recbuff[recbuffindex++] = byte;
+            if(recbuffindex >= 13) {
+
+                memcpy(&state.dyaw,&recbuff[0],4);
+                memcpy(&state.dx,&recbuff[4],4);
+                memcpy(&state.z,&recbuff[8],4);
+                if (recbuff[12]==1)
+                    control::navStop();
+
                 recbuffindex = 0;
                 recstate = 0;
+
                 return true;
             }
             break;
@@ -91,16 +85,10 @@ bool raspi::update() {
 }
 
 void raspi::sendpres() {
-    uint8_t* p = (uint8_t*)&state.z;
-
-    if (!uart_is_writable(RASPI_UARTID)) return;
-    uart_putc(RASPI_UARTID, RASPI_SOF0);
-
-    if (!uart_is_writable(RASPI_UARTID)) return;
-    uart_putc(RASPI_UARTID, RASPI_SOF1);
-
-    for (int i = 0; i < 4; i++) {
-        if (!uart_is_writable(RASPI_UARTID)) return;
-        uart_putc(RASPI_UARTID, p[i]);
-    }
+    uint8_t packet[6];
+    packet[0] = RASPI_SOF0;
+    packet[1] = RASPI_SOF1;
+    memcpy(&packet[2],&state.z,4);
+    fwrite(packet,1,sizeof(packet),stdout);
+    fflush(stdout);
 }

@@ -1,4 +1,3 @@
-#include "hardware/uart.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <inttypes.h>
@@ -6,6 +5,9 @@
 #include "pico/stdlib.h"
 #include "config.hpp"
 #include "structs.hpp"
+#include "pico/stdlib.h"
+#include "pico/stdio_usb.h"
+#include "control.hpp"
 #pragma once
 
 class raspi {

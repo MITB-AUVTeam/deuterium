@@ -39,22 +39,20 @@ int main(void) {
 
     stdio_init_all();
 
-    sleep_ms(1000);
-    gpio_init(4);
-    gpio_set_dir(4, true);
-    bool dummy = true;
-    while (!stdio_usb_connected()) {
-        sleep_ms(100);
-        gpio_put(4, dummy);
-        dummy = !dummy;
-    }
+    // sleep_ms(1000);
+    // gpio_init(4);
+    // gpio_set_dir(4, true);
+    // bool dummy = true;
+    // while (!stdio_usb_connected()) {
+    //     sleep_ms(100);
+    //     gpio_put(4, dummy);
+    //     dummy = !dummy;
+    // }
 
     sleep_ms(1000);
 
-    printf("program initiating\n");
-
-    raspi::init();
-    raspi::blockforMPU();
+    // raspi::init();
+    // raspi::blockforMPU();
 
     imu::init();
     presens::init();
@@ -64,7 +62,6 @@ int main(void) {
     esc::arm();
     esc::mode3d();
 
-    printf("program initialised\n");
 
     add_repeating_timer_ms(
         -STB_LOOP_MS,
@@ -81,7 +78,6 @@ int main(void) {
             presens::read();
             control::stbUpdate();
         }
-
         nav_data_flag = raspi::update();
         raspi::sendpres();
 
@@ -91,15 +87,11 @@ int main(void) {
             last_nav_data_time = new_nav_data_time;
             nav_time_out = false;
             control::navUpdate(nav_dt);
-            printf("%f      %f      %f\n", state.vx, state.dyaw, state.ref_z);
         }
         if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
             control::navStop();
             nav_time_out = true;
-            printf("timeoout");
         }
-
-        // printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
 
         esc::thrust();
 
