@@ -51,6 +51,10 @@ int main(void) {
 
     sleep_ms(1000);
 
+    #if DEBUG_MODE
+    printf("program initiating\n");
+    #endif
+
     // raspi::init();
     // raspi::blockforMPU();
 
@@ -62,6 +66,9 @@ int main(void) {
     esc::arm();
     esc::mode3d();
 
+    #if DEBUG_MODE
+    printf("program initialised\n");
+    #endif
 
     add_repeating_timer_ms(
         -STB_LOOP_MS,
@@ -87,12 +94,23 @@ int main(void) {
             last_nav_data_time = new_nav_data_time;
             nav_time_out = false;
             control::navUpdate(nav_dt);
+
+            #if DEBUG_MODE
+            printf("%f      %f      %f\n", state.dx, state.dyaw, state.ref_z);
+            #endif
         }
         if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
             control::navStop();
             nav_time_out = true;
-        }
 
+            #if DEBUG_MODE
+             printf("timeout");
+            #endif
+        }
+        
+        //  #if DEBUG_MODE
+        //  printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
+        //  #endif
         esc::thrust();
 
         sleep_us(750);

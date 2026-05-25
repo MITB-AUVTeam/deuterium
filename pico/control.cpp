@@ -98,7 +98,9 @@ void control::stbUpdate() {
 
             input_buf[buf_idx] = '\0';
 
+            #if DEBUG_MODE
             printf("CMD: [%s]\n", input_buf);
+            #endif
 
             // Thruster control
 
@@ -110,7 +112,9 @@ void control::stbUpdate() {
 
                     thrusterOff = true;
 
+                    #if DEBUG_MODE
                     printf("Thrusters off\n");
+                    #endif
                 }
 
                 else if (strcmp(input_buf, "1") == 0)
@@ -118,7 +122,9 @@ void control::stbUpdate() {
 
                     thrusterOff = false;
 
+                    #if DEBUG_MODE
                     printf("Thrusters on\n");
+                    #endif
                 }
 
                 else if (strcmp(input_buf, "p") == 0 && thrusterOff)
@@ -126,13 +132,17 @@ void control::stbUpdate() {
 
                     pidUpdate = true;
 
+                    #if DEBUG_MODE
                     printf("Update PID: <%f %f %f>\n", tune->kp, tune->ki, tune->kd);
+                    #endif
                 }
 
                 else if (strcmp(input_buf, "r") == 0)
                 {
                     refUpdate = true;
+                    #if DEBUG_MODE
                     printf("Update ref: <%f>\n", tune->ref);
+                    #endif
                 }
             }
 
@@ -148,17 +158,23 @@ void control::stbUpdate() {
                     tune->ki = ki;
 
                     tune->kd = kd;
+                    #if DEBUG_MODE
                     printf("Parsed: %f %f %f\n", tune->kp, tune->ki, tune->kd);
+                    #endif
 
                     pidUpdate = false;
                 }
                 else if (args == 0) {
+                    #if DEBUG_MODE
                     printf("No update\n");
+                    #endif
                     pidUpdate = false;
                 }
                 else
                 {
+                    #if DEBUG_MODE
                     printf("Invalid format\n");
+                    #endif
                 }
             }
 
@@ -169,7 +185,9 @@ void control::stbUpdate() {
                 if (args == 1)
                 {
                     tune->ref = ref;
+                    #if DEBUG_MODE
                     printf("Parsed: %f\n", tune->ref);
+                    #endif
                 }
                 refUpdate = false;
             }
@@ -232,7 +250,9 @@ void control::stbUpdate() {
     F3 = constrain(F3, F_MIN, F_MAX);
 
     if (!thrusterOff)
+        // #if DEBUG_MODE
         // printf("%f\t%f\t\t%f\t%f\t%f\n", state.roll, state.pitch, F1, F2, F3);
+        // #endif
 
     // ---------- LUT â†’ DSHOT ----------
 

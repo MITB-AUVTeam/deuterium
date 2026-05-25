@@ -33,13 +33,17 @@ void imu::init() {
     uint8_t chipID = 0;
 
     while (chipID != 0xA0) {
+        #if DEBUG_MODE
         printf("BNO055 not connected\n");
+        #endif
         i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg, 1, false);
         i2c_read_blocking(BNO055_PORT, BNO055_ADDR, &chipID, 1, false);
         sleep_ms(500);
     }
 
+    #if DEBUG_MODE
     printf("BNO055 connected\n");
+    #endif
     sleep_ms(1000);
 
     uint8_t data[2];
@@ -75,7 +79,9 @@ void imu::init() {
     roll0 = (raw_roll0 / 900.0f);
     pitch0 = (raw_pitch0 / 900.0f);
    
+    #if DEBUG_MODE
     printf("Roll, Pitch, Yaw locked\n");
+    #endif
 }
 
 void imu::update() {
@@ -106,11 +112,15 @@ void imu::update() {
     state.wy = raw_wy / 900.0f;
     state.wz = raw_wz / 900.0f;
 
+    // #if DEBUG_MODE
     // printf("%f\t%f\n", state.roll, state.pitch);
+    // #endif
 }
 
 // void imu::handleFail() {
+//     #if DEBUG_MODE
 //     printf("IMU FAIL - recovering...\n");
+//     #endif
 
 //     // Step 1: Deinit I2C
 //     i2c_deinit(BNO055_PORT);
@@ -145,5 +155,7 @@ void imu::update() {
 //     // Step 4: Re-init IMU
 //     init();
 
+//     #if DEBUG_MODE
 //     printf("IMU recovered\n");
+//     #endif
 // }
