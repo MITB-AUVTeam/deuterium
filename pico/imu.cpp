@@ -111,10 +111,6 @@ void imu::update() {
     state.wx = raw_wx / 900.0f;
     state.wy = raw_wy / 900.0f;
     state.wz = raw_wz / 900.0f;
-
-    // #if DEBUG_MODE
-    // printf("%f\t%f\n", state.roll, state.pitch);
-    // #endif
 }
 
 // void imu::handleFail() {
