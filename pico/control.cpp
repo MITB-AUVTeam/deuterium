@@ -18,6 +18,7 @@ struct PID {
 PID pid_roll = { 100, 50, 20, 0, 0, 0 };
 PID pid_pitch = { -100, -50, 20, 0, 0, 0 };
 PID pid_z = { 300, 50, 150, 0, 0, 0 };
+PID pid_x = { 10, 0, 0, 0, 0, 0 };
 PID pid_yaw = { 10, 0, 0, 0, 0, 0 };
 PID* tune = &pid_pitch;
 
@@ -280,8 +281,8 @@ void control::stbUpdate() {
 
 void control::navUpdate(float nav_dt) {
 
-    throttle.HL = computePID(pid_yaw, state.dyaw, nav_dt);
-    throttle.HR = -computePID(pid_yaw, state.dyaw, nav_dt);
+    float HL = computePID(pid_x, state.dx, nav_dt) + computePID(pid_yaw, state.dyaw, nav_dt);
+    float HR = computePID(pid_x, state.dx, nav_dt) - computePID(pid_yaw, state.dyaw, nav_dt);
 
     throttle.HL = thrustToDshot(throttle.HL);
     throttle.HR = thrustToDshot(throttle.HR);

@@ -39,23 +39,21 @@ int main(void) {
 
     stdio_init_all();
 
-    // sleep_ms(1000);
-    // gpio_init(4);
-    // gpio_set_dir(4, true);
-    // bool dummy = true;
-    // while (!stdio_usb_connected()) {
-    //     sleep_ms(100);
-    //     gpio_put(4, dummy);
-    //     dummy = !dummy;
-    // }
-
-    sleep_ms(1000);
-
 #if DEBUG_MODE
+    sleep_ms(1000);
+    gpio_init(4);
+    gpio_set_dir(4, true);
+    bool dummy = true;
+    while (!stdio_usb_connected()) {
+        sleep_ms(100);
+        gpio_put(4, dummy);
+        dummy = !dummy;
+    }
+    sleep_ms(1000);
     printf("program initiating\n");
 #endif
 
-    // raspi::init();
+    raspi::init();
     // raspi::blockforMPU();
 
     imu::init();
@@ -81,16 +79,19 @@ int main(void) {
 
         if (stb_flag) {
             stb_flag = false;
+            state.dx = 10;
+            control::navUpdate(0.01);
             imu::update();
-#if DEBUG_MODE
-            printf("%f\t%f\n", state.roll, state.pitch);
-#endif
             presens::read();
 #if DEBUG_MODE
-            printf("%f\n", state.z);
+            printf("%f\t%f\t\t", state.roll, state.pitch);
+            printf("%f\t\t", state.z);
+            printf("%d\t%d\t%d\t%d\t%d\n", throttle.VB, throttle.VR, throttle.VL, throttle.HL, throttle.HR);
 #endif
             control::stbUpdate();
         }
+
+#if !DEBUG_MODE
         nav_data_flag = raspi::update();
         raspi::sendpres();
 
@@ -105,10 +106,8 @@ int main(void) {
             control::navStop();
             nav_time_out = true;
         }
+#endif
 
-        // #if DEBUG_MODE
-        //         printf("%d      %d      %d\n", throttle.VB, throttle.VR, throttle.VL);
-        // #endif
         esc::thrust();
 
         sleep_us(750);

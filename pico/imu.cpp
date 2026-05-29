@@ -33,17 +33,17 @@ void imu::init() {
     uint8_t chipID = 0;
 
     while (chipID != 0xA0) {
-        #if DEBUG_MODE
+#if DEBUG_MODE
         printf("BNO055 not connected\n");
-        #endif
+#endif
         i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg, 1, false);
         i2c_read_blocking(BNO055_PORT, BNO055_ADDR, &chipID, 1, false);
         sleep_ms(500);
     }
 
-    #if DEBUG_MODE
+#if DEBUG_MODE
     printf("BNO055 connected\n");
-    #endif
+#endif
     sleep_ms(1000);
 
     uint8_t data[2];
@@ -70,7 +70,7 @@ void imu::init() {
 
     // read roll and pitch for lock values
     uint8_t reg_euler = 0x1A;
-    
+
     i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg_euler, 1, false);
     i2c_read_blocking(BNO055_PORT, BNO055_ADDR, buffer, 6, false);
     int16_t raw_roll0 = (int16_t)((buffer[3] << 8) | buffer[2]);
@@ -78,16 +78,16 @@ void imu::init() {
     int16_t raw_yaw0 = (int16_t)((buffer[1] << 8) | buffer[0]);
     roll0 = (raw_roll0 / 900.0f);
     pitch0 = (raw_pitch0 / 900.0f);
-   
-    #if DEBUG_MODE
+
+#if DEBUG_MODE
     printf("Roll, Pitch, Yaw locked\n");
-    #endif
+#endif
 }
 
 void imu::update() {
 
     uint8_t reg_euler = 0x1A;
-    
+
     i2c_write_blocking(BNO055_PORT, BNO055_ADDR, &reg_euler, 1, false);
     i2c_read_blocking(BNO055_PORT, BNO055_ADDR, buffer, 6, false);
 
@@ -96,7 +96,7 @@ void imu::update() {
     int16_t raw_yaw = (int16_t)((buffer[1] << 8) | buffer[0]);
     state.roll = (raw_roll / 900.0f);
     state.pitch = (raw_pitch / 900.0f);
-   
+
     state.roll = wrapAngle(state.roll - roll0);
     state.pitch = wrapAngle(state.pitch - pitch0);
 

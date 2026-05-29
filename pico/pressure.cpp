@@ -90,11 +90,15 @@ void presens::init() {
 
         crcRead = C[0] >> 12;
         crcCalculated = crc4(&C[0]);
+#if DEBUG_MODE
         printf("MS5837 not connected\n");
+#endif
         sleep_ms(500);
     } while (crcCalculated != crcRead);
 
+#if DEBUG_MODE
     printf("MS5837 connected\n");
+#endif
 
     if (C[1] < MS5837_30BA_MIN_SENSITIVITY || C[1] > MS5837_02BA_MAX_SENSITIVITY)
     {
