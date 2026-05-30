@@ -79,8 +79,6 @@ int main(void) {
 
         if (stb_flag) {
             stb_flag = false;
-            state.dx = 10;
-            control::navUpdate(0.01);
             imu::update();
             presens::read();
 #if DEBUG_MODE
@@ -100,14 +98,13 @@ int main(void) {
             float nav_dt = absolute_time_diff_us(last_nav_data_time, new_nav_data_time) / 1000000.0f;
             last_nav_data_time = new_nav_data_time;
             nav_time_out = false;
-            control::navUpdate(nav_dt);
+            control::navUpdate(0.001);          //change the dt here, its supposed to be nav_dt but not working maybe because too fast or, nav_ft becomes 0 becuase number too small ig
         }
         if (!nav_time_out && absolute_time_diff_us(last_nav_data_time, get_absolute_time()) > NAV_TIME_OUT_US) {
             control::navStop();
             nav_time_out = true;
         }
 #endif
-
         esc::thrust();
 
         sleep_us(750);
