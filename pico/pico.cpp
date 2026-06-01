@@ -3,6 +3,7 @@
 #include "hardware/uart.h"
 #include "hardware/gpio.h"
 #include "pico/time.h"
+#include "pico/multicore.h"
 
 #include <stdint.h>
 #include <inttypes.h>
@@ -35,6 +36,8 @@ bool control_timer_cb(struct repeating_timer* t)
 State state;
 Throttle throttle;
 
+void core1_entry() {}
+
 int main(void) {
 
     stdio_init_all();
@@ -59,6 +62,8 @@ int main(void) {
     imu::init();
     presens::init();
     control::init();
+
+    multicore_launch_core1(core1_entry);
 
     esc::pio_init();
     esc::arm();

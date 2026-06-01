@@ -44,5 +44,4 @@ void esc::thrust() {
         uint16_t escframe = (packet << 4) | crc;        //final 16bit frame that needs to be sent
         pio_sm_put_blocking(pio[j], sm[j], (uint32_t)escframe << 16);
     }
-    sleep_us(700);
 }
