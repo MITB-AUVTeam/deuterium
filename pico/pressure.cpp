@@ -113,7 +113,25 @@ void presens::init() {
         _model = MS5837_30BA;
     }
 }
-void calc_depth() {
+
+float pressure(float conversion) {
+    if (_model == MS5837_02BA) {
+        return P * conversion / 100.0f;
+    }
+    else {
+        return P * conversion / 10.0f;
+    }
+}
+
+float temperature() {
+    return TEMP / 100.0f;
+}
+
+float depth() {
+    return (pressure(Pa) - 101300) / (fluidDensity * 9.80665);
+}
+
+void presens::calc_depth_0() {
     // Given C1-C6 and D1, D2, calculated TEMP and P
     // Do conversion first and then second order temp compensation
 
@@ -181,22 +199,6 @@ void calc_depth() {
 
     state.z = depth();
     state.z += 1;
-}
-float pressure(float conversion) {
-    if (_model == MS5837_02BA) {
-        return P * conversion / 100.0f;
-    }
-    else {
-        return P * conversion / 10.0f;
-    }
-}
-
-float temperature() {
-    return TEMP / 100.0f;
-}
-
-float depth() {
-    return (pressure(Pa) - 101300) / (fluidDensity * 9.80665);
 }
 
 void presens::ask_D1_5() {
