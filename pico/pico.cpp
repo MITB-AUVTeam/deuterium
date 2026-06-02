@@ -108,10 +108,8 @@ int main(void) {
         if (stb_flag) {
             stb_flag = false;
 
-            imu::ask_euler();
-            imu::read_euler();
-            imu::ask_gyro();
-            imu::read_gyro();
+            imu::ask_read_euler();
+            imu::ask_read_gyro();
 
             presens::ask_D1_5();
             sleep_ms(5);
@@ -122,11 +120,11 @@ int main(void) {
             presens::calc_depth_0();
             control::stbUpdate();
 
-            #if DEBUG_MODE
-                        printf("%f\t%f\t\t", state.roll, state.pitch);
-                        printf("%f\t\t", state.z);
-                        printf("%d\t%d\t%d\t%d\t%d\n", throttle.VB, throttle.VR, throttle.VL, throttle.HL, throttle.HR);
-            #endif
+#if DEBUG_MODE
+            printf("%f\t%f\t\t", state.roll, state.pitch);
+            printf("%f\t\t", state.z);
+            printf("%d\t%d\t%d\t%d\t%d\n", throttle.VB, throttle.VR, throttle.VL, throttle.HL, throttle.HR);
+#endif
         }
 
         if (esc_flag) {
