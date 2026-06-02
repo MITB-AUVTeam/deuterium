@@ -14,8 +14,8 @@ extern State state;
 const uint8_t MS5837_RESET = 0x1E;
 const uint8_t MS5837_ADC_READ = 0x00;
 const uint8_t MS5837_PROM_READ = 0xA0;
-const uint8_t MS5837_CONVERT_D1_8192 = 0x4A;
-const uint8_t MS5837_CONVERT_D2_8192 = 0x5A;
+const uint8_t MS5837_CONVERT_D1_2048 = 0x46;
+const uint8_t MS5837_CONVERT_D2_2048 = 0x56;
 
 const float Pa = 100.0f;
 const float bar = 0.001f;
@@ -113,7 +113,7 @@ void presens::init() {
         _model = MS5837_30BA;
     }
 }
-void calculate() {
+void calc_depth() {
     // Given C1-C6 and D1, D2, calculated TEMP and P
     // Do conversion first and then second order temp compensation
 
@@ -178,6 +178,9 @@ void calculate() {
     else {
         P = (((D1_pres * SENS2) / 2097152l - OFF2) / 8192l);
     }
+
+    state.z = depth();
+    state.z += 1;
 }
 float pressure(float conversion) {
     if (_model == MS5837_02BA) {
@@ -196,35 +199,32 @@ float depth() {
     return (pressure(Pa) - 101300) / (fluidDensity * 9.80665);
 }
 
-void presens::read() {
+void presens::ask_D1_5() {
+    uint8_t reg = MS5837_CONVERT_D1_2048;
+    i2c_write_blocking(I2C_PORT, I2C_ADDR, &reg, 1, false);
+}
 
-    uint8_t reg;
+void presens::read_D1_0() {
+    uint8_t reg = MS5837_ADC_READ;
     uint8_t buffer[3];
 
-    reg = MS5837_CONVERT_D1_8192;
     i2c_write_blocking(I2C_PORT, I2C_ADDR, &reg, 1, false);
-    sleep_ms(20);
-
-    reg = MS5837_ADC_READ;
-    i2c_write_blocking(I2C_PORT, I2C_ADDR, &reg, 1, false);
-
     i2c_read_blocking(I2C_PORT, I2C_ADDR, buffer, 3, false);
-    D1_pres = buffer[0] << 16 | buffer[1] << 8 | buffer[2];
 
+    D1_pres = (uint32_t)buffer[0] << 16 | (uint32_t)buffer[1] << 8 | (uint32_t)buffer[2];
+}
 
-
-    reg = MS5837_CONVERT_D2_8192;
+void presens::ask_D2_5() {
+    uint8_t reg = MS5837_CONVERT_D2_2048;
     i2c_write_blocking(I2C_PORT, I2C_ADDR, &reg, 1, false);
-    sleep_ms(20);
+}
 
-    reg = MS5837_ADC_READ;
+void presens::read_D2_0() {
+    uint8_t reg = MS5837_ADC_READ;
+    uint8_t buffer[3];
+
     i2c_write_blocking(I2C_PORT, I2C_ADDR, &reg, 1, false);
-
     i2c_read_blocking(I2C_PORT, I2C_ADDR, buffer, 3, false);
-    D2_temp = buffer[0] << 16 | buffer[1] << 8 | buffer[2];
 
-    calculate();
-
-    state.z = depth();
-    state.z += 1;
+    D2_temp = (uint32_t)buffer[0] << 16 | (uint32_t)buffer[1] << 8 | (uint32_t)buffer[2];
 }

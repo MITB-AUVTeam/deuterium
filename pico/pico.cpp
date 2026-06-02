@@ -109,7 +109,13 @@ int main(void) {
             stb_flag = false;
             gpio_put(DEBUG_PIN, 1);
             imu::update();
-            presens::read();
+            presens::ask_D1_5();
+            sleep_ms(5);
+            presens::read_D1_0();
+            presens::ask_D2_5();
+            sleep_ms(5);
+            presens::read_D2_0();
+            presens::calc_depth_0();
             control::stbUpdate();
             gpio_put(DEBUG_PIN, 0);
 #if DEBUG_MODE
