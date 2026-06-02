@@ -11,8 +11,8 @@
 class imu {
 public:
     static void init();
-
-    static void update();
-
-    static void handleFail();
+    static void ask_euler();
+    static void read_euler();
+    static void ask_gyro();
+    static void read_gyro();
 };

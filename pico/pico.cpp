@@ -107,8 +107,12 @@ int main(void) {
 
         if (stb_flag) {
             stb_flag = false;
-            gpio_put(DEBUG_PIN, 1);
-            imu::update();
+
+            imu::ask_euler();
+            imu::read_euler();
+            imu::ask_gyro();
+            imu::read_gyro();
+
             presens::ask_D1_5();
             sleep_ms(5);
             presens::read_D1_0();
@@ -117,12 +121,12 @@ int main(void) {
             presens::read_D2_0();
             presens::calc_depth_0();
             control::stbUpdate();
-            gpio_put(DEBUG_PIN, 0);
-#if DEBUG_MODE
-            printf("%f\t%f\t\t", state.roll, state.pitch);
-            printf("%f\t\t", state.z);
-            printf("%d\t%d\t%d\t%d\t%d\n", throttle.VB, throttle.VR, throttle.VL, throttle.HL, throttle.HR);
-#endif
+
+            #if DEBUG_MODE
+                        printf("%f\t%f\t\t", state.roll, state.pitch);
+                        printf("%f\t\t", state.z);
+                        printf("%d\t%d\t%d\t%d\t%d\n", throttle.VB, throttle.VR, throttle.VL, throttle.HL, throttle.HR);
+            #endif
         }
 
         if (esc_flag) {
