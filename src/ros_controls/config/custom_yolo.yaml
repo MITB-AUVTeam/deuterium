@@ -4,8 +4,8 @@
       # This absolute path bridges the two workspaces perfectly!
       detection_model: 'CUSTOM_YOLOLIKE_BOX_OBJECTS'
       #custom_onnx_file: '/home/cupcake/Prequal/src/ros_controls/ros_controls/best.onnx'
-      custom_onnx_file: '/home/cupcake/ros2_ws/src/auv_bringup/models/best.onnx'
-      custom_onnx_input_size: 608 # Change to 640 if trained at 640
+      custom_onnx_file: '/home/cupcake/Desktop/prequal-task/src/ros_controls/models/Pq_gate.onnx'
+      custom_onnx_input_size: 608 
       
       custom_class_count: 1 
 

@@ -4,7 +4,7 @@ import rclpy
 from rclpy.node import Node
 
 from std_msgs.msg import Float32
-from custom_interfaces.msg import ControlCommand
+from auv_msgs.msg import ControlCommand
 
 from ctypes import *
 import serial

@@ -1,0 +1,6 @@
+.vscode/
+build/
+install/
+log/
+misc_camera_scripts/stereo_dataset_*/
+misc_camera_scripts/*.zip

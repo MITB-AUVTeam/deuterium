@@ -16,6 +16,7 @@
 #include <string>
 #include <thread>
 #include <fstream>
+//--Helo i ama Animesh--//
 
 int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
@@ -66,7 +67,7 @@ int main(int argc, char** argv) {
         });
 
     // Actuator publishers
-    ctx->pico_pub = node->create_publisher<custom_interfaces::msg::ControlCommand>("/control_cmd", 10);
+    ctx->pico_pub = node->create_publisher<auv_msgs::msg::ControlCommand>("/control_cmd", 10);
 
     // IMU subscription (orientation / yaw)
     ctx->imu_sub =
@@ -115,7 +116,7 @@ int main(int argc, char** argv) {
 
     // ZED Image stream subscription 
     ctx->image_sub = node->create_subscription<sensor_msgs::msg::Image>(
-        "/zed2i_front/zed_node/left/image_rect_color", 10,
+        "/zed2i_front/zed_node/rgb/color/rect/image", 10,
         [ctx](const sensor_msgs::msg::Image::SharedPtr) {
             std::lock_guard<std::mutex> g(ctx->mtx);
             ctx->image_received = true;
@@ -136,8 +137,9 @@ int main(int argc, char** argv) {
 
     // Locate the XML mission file
     std::string xml_path;
-    if (argc > 1) {
-        xml_path = argv[1];
+    auto non_ros_args = rclcpp::remove_ros_arguments(argc, argv);
+    if (non_ros_args.size() > 1) {
+        xml_path = non_ros_args[1];
     } else {
         try {
             xml_path = ament_index_cpp::get_package_share_directory("prequalification_bt")

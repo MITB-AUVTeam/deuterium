@@ -320,6 +320,7 @@ BT::NodeStatus DriveThruGate::onRunning() {
             }
         } else {
             align_started_ = false;
+            //if ulta signs then change here
             ctx->publishToPico(-(float)smoothed_norm_x_, 0.0f, (float)ctx->target_depth, 0);
         }
         return BT::NodeStatus::RUNNING;
@@ -406,6 +407,8 @@ BT::NodeStatus OrbitPole::onRunning() {
             phase_ = Phase::SURGE;
             start_time_ = ctx->node->get_clock()->now().seconds();
         } else {
+        
+        	//change here too 
             ctx->publishToPico((float)yaw_err, 0.0f,(float)ctx->target_depth, 0);
         }
         return BT::NodeStatus::RUNNING;
