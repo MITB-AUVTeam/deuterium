@@ -181,8 +181,7 @@ public:
   DiveToDepth(const std::string &name, const BT::NodeConfig &config)
       : BT::StatefulActionNode(name, config) {}
   static BT::PortsList providedPorts() {
-    return {BT::InputPort<double>("target_depth"),
-            BT::InputPort<double>("staystill")};
+    return {BT::InputPort<double>("target_depth")};
   }
   BT::NodeStatus onStart() override;
   BT::NodeStatus onRunning() override;
@@ -190,9 +189,6 @@ public:
 
 private:
   double target_z_ = 0.0;
-  double staystill_ = 0.0;
-  std::chrono::steady_clock::time_point stay_still_start_;
-  bool in_stay_still_ = false;
 };
 
 class Do360Turn : public BT::StatefulActionNode {
@@ -215,23 +211,17 @@ class DriveThruGate : public BT::StatefulActionNode {
 public:
   DriveThruGate(const std::string &name, const BT::NodeConfig &config)
       : BT::StatefulActionNode(name, config) {}
-  static BT::PortsList providedPorts() {
-    return {BT::InputPort<double>("staystill")};
-  }
+  static BT::PortsList providedPorts() { return {}; }
   BT::NodeStatus onStart() override;
   BT::NodeStatus onRunning() override;
   void onHalted() override;
 
 private:
-  enum class Phase { ALIGN, DRIVE, STAY_STILL };
+  enum class Phase { ALIGN, DRIVE };
   Phase phase_ = Phase::ALIGN;
   double locked_heading_ = 0.0;
-  double align_start_time_ = 0.0;
-  bool align_started_ = false;
   int gate_lost_frames_ = 0;
   float smoothed_norm_x_ = 0.0f;
-  double staystill_ = 0.0;
-  std::chrono::steady_clock::time_point stay_still_start_;
 };
 
 class ApproachObject : public BT::StatefulActionNode {
@@ -240,22 +230,18 @@ public:
       : BT::StatefulActionNode(name, config) {}
   static BT::PortsList providedPorts() {
     return {BT::InputPort<std::string>("object"),
-            BT::InputPort<double>("threshold"),
-            BT::InputPort<double>("staystill")};
+            BT::InputPort<double>("threshold")};
   }
   BT::NodeStatus onStart() override;
   BT::NodeStatus onRunning() override;
   void onHalted() override;
 
 private:
-  enum class Phase { ALIGN, APPROACH, STAY_STILL };
+  enum class Phase { ALIGN, APPROACH };
   Phase phase_ = Phase::ALIGN;
   std::string target_object_;
-  double threshold_ = 1.5, align_start_time_ = 0.0;
-  bool align_started_ = false;
+  double threshold_ = 1.5;
   float smoothed_norm_x_ = 0.0f;
-  double staystill_ = 0.0;
-  std::chrono::steady_clock::time_point stay_still_start_;
 };
 
 class OrbitPole : public BT::StatefulActionNode {
