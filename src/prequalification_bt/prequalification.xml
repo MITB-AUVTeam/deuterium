@@ -19,10 +19,6 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
             <DiveToDepth target_depth="0.5" staystill="2.0"/>
 
             <!-- 2. GATE MISSION -->
-            <Fallback name="find_gate">
-                <IsObjectSeen object="GATE"/>
-                <Do360Turn success_when_seen="GATE"/>
-            </Fallback>
             
             <!-- NOTE: Change 'threshold' here to set how close to get to the gate before passing -->
             <ApproachObject object="GATE" threshold="2.0" staystill="1.0"/>
