@@ -16,19 +16,15 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
 
             <!-- 1. INITIALIZE -->
             <!-- NOTE: Change target_depth here (meters, positive-down) for the initial dive -->
-            <DiveToDepth target_depth="0.3" staystill="2.0"/>
+            <DiveToDepth target_depth="0.5"/>
 
             <!-- 2. GATE MISSION -->
-            <Fallback name="find_gate">
-                <IsObjectSeen object="GATE"/>
-                <Do360Turn success_when_seen="GATE"/>
-            </Fallback>
             
             <!-- NOTE: Change 'threshold' here to set how close to get to the gate before passing -->
-            <ApproachObject object="GATE" threshold="2.0" staystill="1.0"/>
+            <ApproachObject object="GATE" threshold="1.0"/>
             
             <!-- NOTE: Surge through and clear the gate (Uses frame-counting in C++) -->
-            <DriveThruGate staystill="3.0"/>
+            <DriveThruGate/>
 
             <!-- 3. POLE MISSION -->
             <Fallback name="find_pole">
@@ -37,7 +33,7 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
             </Fallback>
             
             <!-- NOTE: Change 'threshold' here to set the radius of the orbit approach -->
-            <ApproachObject object="POLE" threshold="1.5" staystill="1.0"/>
+            <ApproachObject object="POLE" threshold="1.0"/>
 
             <!-- NOTE: 8-step Octagon orbit (Surge duration is in mission_params.yaml) -->
             <OrbitPole object="POLE" staystill="3.0"/>
@@ -49,10 +45,10 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
             </Fallback>
 
             <!-- NOTE: Approach home gate to threshold -->
-            <ApproachObject object="GATE" threshold="2.0" staystill="1.0"/>
+            <ApproachObject object="GATE" threshold="1.0"/>
 
             <!-- NOTE: Clear home gate -->
-            <DriveThruGate staystill="3.0"/>
+            <DriveThruGate/>
         </Sequence>
     </BehaviorTree>
 
@@ -63,7 +59,6 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
         </Condition>
         <Action ID="DiveToDepth">
             <input_port name="target_depth" type="double">Depth to dive to</input_port>
-            <input_port name="staystill" type="double" default="0.0">Seconds to stay still after</input_port>
         </Action>
         <Action ID="Do360Turn">
             <input_port name="success_when_seen" type="std::string">Stop when this is seen</input_port>
@@ -71,11 +66,8 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
         <Action ID="ApproachObject">
             <input_port name="object" type="std::string">Object to approach</input_port>
             <input_port name="threshold" type="double">Target distance</input_port>
-            <input_port name="staystill" type="double" default="0.0">Seconds to stay still after</input_port>
         </Action>
-        <Action ID="DriveThruGate">
-            <input_port name="staystill" type="double" default="0.0">Seconds to stay still after</input_port>
-        </Action>
+        <Action ID="DriveThruGate"/>
         <Action ID="OrbitPole">
             <input_port name="object" type="std::string">Object to orbit</input_port>
             <input_port name="staystill" type="double" default="0.0">Seconds to stay still after</input_port>

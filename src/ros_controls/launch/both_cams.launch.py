@@ -22,6 +22,12 @@ def generate_launch_description():
     down_cam_config = os.path.join(
         get_package_share_directory('ros_controls'), 'config', 'down_cam.yaml'
     )
+
+    down_cam_perf_config = os.path.join(
+        get_package_share_directory('ros_controls'), 'config', 'down_cam_performance_mode.yaml'
+    )
+
+
     yolo_config=os.path.join(
         get_package_share_directory('ros_controls'), 'config', 'custom_yolo.yaml'
     )
@@ -41,17 +47,9 @@ def generate_launch_description():
             }.items(),
         ),
     ])
-    
-    viewer_node_3 = Node(
-    	package='ros_controls',
-    	executable='viewer_3',  # Must match the entry point string in your setup.py or CMakeLists.txt
-    	name='zed_image_viewer',
-    	output='screen',
-    	parameters=[{
-        	'input_image_topic': '/detection_image'
-    	}],
-    )
 
+    #Bottom camera runs on PERFORMANCE mode to prevent lag caused due to running both cams and yolo model on them both
+    #Can switch to NEURAL_LIGHT too , change it in the depth_mode parameter of down_cam_performance_mode.yaml
 
     cam_down = GroupAction(actions=[
         #PushRosNamespace('zed_down'),
@@ -63,10 +61,16 @@ def generate_launch_description():
                 'serial_number':  '38605411',
                 'publish_tf':     'false',
                 'publish_map_tf': 'false',
-                'ros_params_override_path':down_cam_config,
+                'ros_params_override_path':down_cam_perf_config,
                 #'custom_object_detection_config_path': yolo_config,
             }.items(),
         ),
     ])
 
-    return LaunchDescription([cam_front, cam_down])
+    combined_detections_hsv_pose = Node(
+    	package='ros_controls',
+    	executable='combined_detections_hsv_pose',
+    )
+    
+
+    return LaunchDescription([cam_front, cam_down,combined_detections_hsv_pose])

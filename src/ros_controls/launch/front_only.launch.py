@@ -28,12 +28,17 @@ def generate_launch_description():
         get_package_share_directory('ros_controls'), 'config', 'custom_yolo.yaml'
     )
 
+    '''
     print(yolo_config)
     import yaml
     with open(yolo_config, 'r') as f:
         data = yaml.full_load(f)
+        print(data.get('/**', {}).get('ros__parameters'))
+    
+    '''
+    
 
-    print(data.get('/**', {}).get('ros__parameters'))
+    
 
     cam_front = GroupAction(actions=[
         #PushRosNamespace('zed_front'),
@@ -50,7 +55,12 @@ def generate_launch_description():
             }.items(),
         ),
     ])
+
+    combined_detections_hsv_pose = Node(
+    	package='ros_controls',
+    	executable='combined_detections_hsv_pose',
+    )
     
     
 
-    return LaunchDescription([cam_front])
+    return LaunchDescription([cam_front,combined_detections_hsv_pose])

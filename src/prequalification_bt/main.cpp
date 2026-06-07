@@ -16,7 +16,6 @@
 #include <string>
 #include <thread>
 #include <fstream>
-//--Helo i ama Animesh--//
 
 int main(int argc, char** argv) {
     rclcpp::init(argc, argv);

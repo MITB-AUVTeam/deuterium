@@ -2,7 +2,7 @@ import os
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, GroupAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch_ros.actions import PushRosNamespace
+from launch_ros.actions import PushRosNamespace,Node
 from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
@@ -38,4 +38,9 @@ def generate_launch_description():
         ),
     ])
 
-    return LaunchDescription([cam_down])
+    combined_detections_hsv_pose = Node(
+    	package='ros_controls',
+    	executable='combined_detections_hsv_pose',
+    )
+
+    return LaunchDescription([cam_down,combined_detections_hsv_pose])
