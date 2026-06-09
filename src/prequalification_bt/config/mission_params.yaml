@@ -10,7 +10,7 @@ prequalification_bt:
   ros__parameters:
     # --- GLOBAL SPEEDS ---
     # NOTE: Set to 0.1 for first hardware test. Increase to move faster.
-    base_surge_speed: 1.4
+    base_surge_speed: 0.1
     base_yaw_speed: 0.1
 
     # --- DETECTION CONFIDENCE ---

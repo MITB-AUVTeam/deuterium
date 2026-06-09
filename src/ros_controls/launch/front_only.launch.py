@@ -64,4 +64,3 @@ def generate_launch_description():
     
 
     return LaunchDescription([cam_front,combined_detections_hsv_pose])
-

@@ -63,7 +63,7 @@ class TeleopNode(Node):
         self.stop_thrusters = False
 
         # Reset per-cycle deltas after publishing
-        #self.delta_theta    = 0.0
+        self.delta_theta    = 0.0
         #self.delta_distance = 0.0
 
 

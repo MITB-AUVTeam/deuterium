@@ -16,7 +16,8 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
 
             <!-- 1. INITIALIZE -->
             <!-- NOTE: Change target_depth here (meters, positive-down) for the initial dive -->
-           
+            <DiveToDepth target_depth="0.5"/>
+
             <!-- 2. GATE MISSION -->
             
             <!-- NOTE: Change 'threshold' here to set how close to get to the gate before passing -->
@@ -28,8 +29,7 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
             <!-- 3. POLE MISSION -->
             <Fallback name="find_pole">
                 <IsObjectSeen object="POLE"/>
-                
-                
+                <Do360Turn success_when_seen="POLE"/>
             </Fallback>
             
             <!-- NOTE: Change 'threshold' here to set the radius of the orbit approach -->
@@ -41,7 +41,7 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
             <!-- 4. RETURN HOME (Reactive) -->
             <Fallback name="find_gate_home">
                 <IsObjectSeen object="GATE"/>
-               
+                <Do360Turn success_when_seen="GATE"/>
             </Fallback>
 
             <!-- NOTE: Approach home gate to threshold -->
@@ -60,7 +60,9 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
         <Action ID="DiveToDepth">
             <input_port name="target_depth" type="double">Depth to dive to</input_port>
         </Action>
-       
+        <Action ID="Do360Turn">
+            <input_port name="success_when_seen" type="std::string">Stop when this is seen</input_port>
+        </Action>
         <Action ID="ApproachObject">
             <input_port name="object" type="std::string">Object to approach</input_port>
             <input_port name="threshold" type="double">Target distance</input_port>

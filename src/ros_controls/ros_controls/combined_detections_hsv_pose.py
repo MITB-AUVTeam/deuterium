@@ -246,10 +246,9 @@ class UnifiedDetectionNode(Node):
                 v = (y1 + y2) / 2.0
                 x_cam = (u - self.cx) * distance / self.fx
                 y_cam = (v - self.cy) * distance / self.fy
-                #pos = (x_cam, y_cam, distance)
-                pos = (distance, y_cam,x_cam)
+                pos = (x_cam, y_cam, distance)
             else:
-                pos = (distance,0.0,0.0)  # fallback until intrinsics arrive
+                pos = (0.0, 0.0, distance)  # fallback until intrinsics arrive
             
             #pos = (0.0, 0.0,distance)
 
@@ -296,4 +295,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-

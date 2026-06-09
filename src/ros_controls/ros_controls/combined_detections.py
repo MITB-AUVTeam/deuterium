@@ -164,7 +164,6 @@ class UnifiedDetectionNode(Node):
 
         det_array = DetectionArray()
         det_array.header = img_msg.header
-
         det3d_array = Detection3DArray()
         det3d_array.header = img_msg.header
 
@@ -189,10 +188,11 @@ class UnifiedDetectionNode(Node):
             cls_name = YOLO_CLASS_MAP.get(cls_id, "preq_gate") # FIXED MAPPING
             conf = float(obj.confidence) / 100.0
             
-            # forward optical depth
-            #pos = (float(obj.position[0]), float(obj.position[1]), float(obj.position[2]))
-            pos = (float(obj.position[2]), float(obj.position[1]), float(obj.position[0]))
-            distance = abs(float(obj.position[0]))
+            # FIXED: ZED SDK camera framework defines index [2] as forward optical depth
+            pos = (float(obj.position[0]), float(obj.position[1]), float(obj.position[2]))
+
+            #need to verify whether or not distance is [0] or [2]
+            distance = float(obj.position[0]) 
 
             obj_id = f'yolo_{cls_name}_{tracking_id}'
             current_ids.add(obj_id)
@@ -221,7 +221,9 @@ class UnifiedDetectionNode(Node):
             distance = self.smooth_depth(obj_id, raw_depth)
             
             # FIXED: Map distance cleanly to Z index (pos[2]) so behavior tree reads it properly
-            pos = (0.0, 0.0, distance)
+           
+           #changed the order here from (0,0,distance)
+            pos = (0.0, 0.0,distance)
 
             det_array.detections.append(
                 self.build_custom_det(img_msg.header, bbox, 'preq_pole', 0.5, pos, tracking_id))
@@ -233,6 +235,12 @@ class UnifiedDetectionNode(Node):
             cv2.putText(frame, label, (x1, max(y1 - 10, 15)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             
             tracking_id += 1
+
+        if not det_array.detections:
+            self.get_logger().info('No detections published this frame (YOLO + HSV both)')
+       
+
+
 
         # Clean up stale history
         for old_id in list(self.depth_history.keys()):

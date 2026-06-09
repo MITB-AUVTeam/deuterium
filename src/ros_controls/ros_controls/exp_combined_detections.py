@@ -28,7 +28,7 @@ MIN_CONTOUR_AREA = 500
 # YOLO CLASS MAPPING SYNCED WITH C++ BT_NODES
 YOLO_CLASS_MAP = {
     0: 'preq_gate',
-    #1: 'preq_gate'
+    1: 'preq_gate'
 }
 
 DETECTION_CONFIDENCE_THRESHOLD = 0.4  # Minimum confidence for detection publication
@@ -195,7 +195,7 @@ class UnifiedDetectionNode(Node):
 
             # ZED SDK camera framework: need to verify whether position[0] or position[2] is forward depth
             pos = (float(obj.position[0]), float(obj.position[1]), float(obj.position[2]))
-            distance = float(obj.position[0])  # TODO: confirm axis ? likely should be position[2]
+            distance = float(obj.position[0])  # TODO: confirm axis — likely should be position[2]
 
             obj_id = f'yolo_{cls_name}_{tracking_id}'
             current_ids.add(obj_id)

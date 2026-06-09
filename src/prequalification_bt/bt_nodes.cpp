@@ -23,35 +23,42 @@ BT::NodeStatus AllSystemsOK::tick() {
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
 
+    // Evaluate every sensor condition into a single flag.
+    // All failures are logged simultaneously so you can see everything that's wrong at once.
+    bool all_ok = true;
+
     if (!ctx->imu_received) {
-        RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 2000, 
+        RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 2000,
                              "[AllSystemsOK] Waiting for /imu ...");
-        return BT::NodeStatus::RUNNING;
+        all_ok = false;
     }
 
-    // 
-    // if (!ctx->altimeter_received) {
-        // RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 2000,
-            // "[AllSystemsOK] Waiting for /altimeter ...");
-        // return BT::NodeStatus::RUNNING;
-    // }
+    if (!ctx->altimeter_received) {
+        RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 2000,
+                             "[AllSystemsOK] Waiting for /altimeter ...");
+        all_ok = false;
+    }
 
     if (!ctx->zed_ok) {
         RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 2000,
-            "[AllSystemsOK] ZED diagnostic...");
-        return BT::NodeStatus::RUNNING;
+                             "[AllSystemsOK] ZED camera not healthy.");
+        all_ok = false;
     }
 
     if (!ctx->image_received) {
         RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 2000,
-            "[AllSystemsOK] Waiting for image stream ...");
-        return BT::NodeStatus::RUNNING;
+                             "[AllSystemsOK] Waiting for image stream ...");
+        all_ok = false;
     }
 
     double image_age = ctx->node->get_clock()->now().seconds() - ctx->last_image_t;
-    if (image_age > 1.0) {
+    if (ctx->image_received && image_age > 1.0) {
         RCLCPP_WARN_THROTTLE(ctx->node->get_logger(), *ctx->node->get_clock(), 2000,
-            "[AllSystemsOK] Image stream stale (%.1fs ago) ...", image_age);
+                             "[AllSystemsOK] Image stream stale (%.1fs ago).", image_age);
+        all_ok = false;
+    }
+
+    if (!all_ok) {
         return BT::NodeStatus::RUNNING;
     }
 
@@ -65,8 +72,6 @@ BT::NodeStatus DiveToDepth::onStart() {
     auto depth_in = getInput<double>("target_depth");
     if (!depth_in) throw BT::RuntimeError("DiveToDepth: missing [target_depth]");
     target_z_ = depth_in.value();
-    staystill_ = getInput<double>("staystill").value_or(0.0);
-    in_stay_still_ = false;
 
     auto ctx = getCtx(config());
     ctx->target_depth = target_z_;
@@ -80,32 +85,14 @@ BT::NodeStatus DiveToDepth::onRunning() {
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
 
-    if (in_stay_still_) {
-        if (std::chrono::duration<double>(std::chrono::steady_clock::now() - stay_still_start_).count() >= staystill_) {
-            return BT::NodeStatus::SUCCESS;
-        }
-        ctx->stopMotion();
-        return BT::NodeStatus::RUNNING;
-    }
-
-    /*
     double current_z = ctx->latest_altimeter;
     if (std::abs(target_z_ - current_z) < ctx->depth_tolerance) {
-        if (staystill_ > 0.01) {
-            in_stay_still_ = true;
-            stay_still_start_ = std::chrono::steady_clock::now();
-            RCLCPP_INFO(ctx->node->get_logger(), "[DiveToDepth] Depth reached. Staying still for %.1f s", staystill_);
-            ctx->stopMotion();
-            return BT::NodeStatus::RUNNING;
-        }
         RCLCPP_INFO(ctx->node->get_logger(), "[DiveToDepth] Target depth reached.");
         return BT::NodeStatus::SUCCESS;
     }
 
     ctx->publishToPico(0.0f, 0.0f, (float)target_z_, 0);
     return BT::NodeStatus::RUNNING;
-    */
-    
 }
 
 void DiveToDepth::onHalted() { getCtx(config())->stopMotion(); }
@@ -122,9 +109,49 @@ BT::NodeStatus IsObjectSeen::tick() {
     return ctx->isObjectSeen(obj.value()) ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
 }
 
+// --- Do360Turn --------------------------------------------------------------
 
+BT::NodeStatus Do360Turn::onStart() {
+    auto obj = getInput<std::string>("success_when_seen");
+    if (!obj) throw BT::RuntimeError("Do360Turn: missing [success_when_seen]");
+    target_object_ = obj.value();
 
+    auto ctx = getCtx(config());
+    rclcpp::spin_some(ctx->node);
 
+    prev_yaw_ = ctx->getCurrentYaw();
+    accumulated_yaw_ = 0.0;
+
+    RCLCPP_INFO(ctx->node->get_logger(), "[Do360Turn] Searching for %s...", target_object_.c_str());
+    ctx->publishToPico(ctx->base_yaw_speed, 0.0f, (float)ctx->target_depth, 0);
+    return BT::NodeStatus::RUNNING;
+}
+
+BT::NodeStatus Do360Turn::onRunning() {
+    auto ctx = getCtx(config());
+    rclcpp::spin_some(ctx->node);
+
+    if (ctx->isObjectSeen(target_object_)) {
+        ctx->stopMotion();
+        RCLCPP_INFO(ctx->node->get_logger(), "[Do360Turn] %s found.", target_object_.c_str());
+        return BT::NodeStatus::SUCCESS;
+    }
+
+    double current_yaw = ctx->getCurrentYaw();
+    accumulated_yaw_ += std::abs(normalizeAngle(current_yaw - prev_yaw_));
+    prev_yaw_ = current_yaw;
+
+    if (accumulated_yaw_ >= (2.0 * M_PI)) {
+        ctx->stopMotion();
+        RCLCPP_WARN(ctx->node->get_logger(), "[Do360Turn] Full rotation complete. %s not found.", target_object_.c_str());
+        return BT::NodeStatus::FAILURE;
+    }
+
+    ctx->publishToPico(ctx->base_yaw_speed, 0.0f, (float)ctx->target_depth, 0);
+    return BT::NodeStatus::RUNNING;
+}
+
+void Do360Turn::onHalted() { getCtx(config())->stopMotion(); }
 
 // --- ApproachObject ---------------------------------------------------------
 
@@ -134,13 +161,11 @@ BT::NodeStatus ApproachObject::onStart() {
     if (!obj || !thr) throw BT::RuntimeError("ApproachObject: missing [object] or [threshold]");
     target_object_ = obj.value();
     threshold_      = thr.value();
-    staystill_      = getInput<double>("staystill").value_or(0.0);
 
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
 
     phase_            = Phase::ALIGN;
-    align_started_    = false;
     smoothed_norm_x_  = 0.0f;
 
     RCLCPP_INFO(ctx->node->get_logger(), "[ApproachObject] Approaching %s to %.1f m", target_object_.c_str(), threshold_);
@@ -150,14 +175,6 @@ BT::NodeStatus ApproachObject::onStart() {
 BT::NodeStatus ApproachObject::onRunning() {
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
-
-    if (phase_ == Phase::STAY_STILL) {
-        if (std::chrono::duration<double>(std::chrono::steady_clock::now() - stay_still_start_).count() >= staystill_) {
-            return BT::NodeStatus::SUCCESS;
-        }
-        ctx->stopMotion();
-        return BT::NodeStatus::RUNNING;
-    }
 
     double ox, oy, oz;
     bool seen = ctx->getObjectPosition(target_object_, ox, oy, oz);
@@ -173,18 +190,9 @@ BT::NodeStatus ApproachObject::onRunning() {
 
         float deadband = (target_object_ == "GATE") ? ctx->gate_align_deadband : ctx->pole_align_deadband;
         if (std::abs(smoothed_norm_x_) < deadband) {
-            if (!align_started_) {
-                align_start_time_ = ctx->node->get_clock()->now().seconds();
-                align_started_    = true;
-            }
-            if (ctx->node->get_clock()->now().seconds() - align_start_time_ >= 0.5) {
-                phase_ = Phase::APPROACH;
-                RCLCPP_INFO(ctx->node->get_logger(), "[ApproachObject] Aligned. Moving to threshold.");
-            } else {
-                ctx->stopMotion();
-            }
+            phase_ = Phase::APPROACH;
+            RCLCPP_INFO(ctx->node->get_logger(), "[ApproachObject] Aligned. Moving to threshold.");
         } else {
-            align_started_ = false;
             ctx->publishToPico(-(float)smoothed_norm_x_, 0.0f, (float)ctx->target_depth, 0);
         }
         return BT::NodeStatus::RUNNING;
@@ -193,14 +201,7 @@ BT::NodeStatus ApproachObject::onRunning() {
     if (phase_ == Phase::APPROACH) {
         if (!seen) { phase_ = Phase::ALIGN; return BT::NodeStatus::RUNNING; }
 
-        if (oz <= threshold_) {
-            if (staystill_ > 0.01) {
-                phase_            = Phase::STAY_STILL;
-                stay_still_start_ = std::chrono::steady_clock::now();
-                RCLCPP_INFO(ctx->node->get_logger(), "[ApproachObject] Threshold reached. Staying still.");
-                ctx->stopMotion();
-                return BT::NodeStatus::RUNNING;
-            }
+        if (oz < threshold_) {
             ctx->stopMotion();
             return BT::NodeStatus::SUCCESS;
         }
@@ -219,14 +220,11 @@ void ApproachObject::onHalted() { getCtx(config())->stopMotion(); }
 // --- DriveThruGate ----------------------------------------------------------
 
 BT::NodeStatus DriveThruGate::onStart() {
-    staystill_  = getInput<double>("staystill").value_or(0.0);
-
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
 
     locked_heading_   = ctx->getCurrentYaw();
     phase_            = Phase::ALIGN;
-    align_started_    = false;
     gate_lost_frames_ = 0;
     smoothed_norm_x_  = 0.0f;
 
@@ -238,22 +236,12 @@ BT::NodeStatus DriveThruGate::onRunning() {
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
 
-    if (phase_ == Phase::STAY_STILL) {
-        if (std::chrono::duration<double>(
-                std::chrono::steady_clock::now() - stay_still_start_).count() >= staystill_) {
-            return BT::NodeStatus::SUCCESS;
-        }
-        ctx->stopMotion();
-        return BT::NodeStatus::RUNNING;
-    }
-
     double ox, oy, oz;
     bool gate_seen = ctx->getObjectPosition("GATE", ox, oy, oz);
 
     if (phase_ == Phase::ALIGN) {
         if (!gate_seen) {
             ctx->publishToPico(ctx->base_yaw_speed, 0.0f, (float)ctx->target_depth, 0);
-            align_started_   = false;
             smoothed_norm_x_ = 0.0f;
             return BT::NodeStatus::RUNNING;
         }
@@ -262,21 +250,11 @@ BT::NodeStatus DriveThruGate::onRunning() {
         smoothed_norm_x_  = 0.7f * smoothed_norm_x_ + 0.3f * (float)raw_norm_x;
 
         if (std::abs(smoothed_norm_x_) < ctx->gate_align_deadband) {
-            if (!align_started_) {
-                align_start_time_ = ctx->node->get_clock()->now().seconds();
-                align_started_    = true;
-            }
-            if (ctx->node->get_clock()->now().seconds() - align_start_time_ >= 0.5) {
-                phase_            = Phase::DRIVE;
-                locked_heading_   = ctx->getCurrentYaw();
-                gate_lost_frames_ = 0;
-                RCLCPP_INFO(ctx->node->get_logger(), "[DriveThruGate] Aligned. Driving.");
-            } else {
-                ctx->stopMotion();
-            }
+            phase_            = Phase::DRIVE;
+            locked_heading_   = ctx->getCurrentYaw();
+            gate_lost_frames_ = 0;
+            RCLCPP_INFO(ctx->node->get_logger(), "[DriveThruGate] Aligned. Driving.");
         } else {
-            align_started_ = false;
-       
             ctx->publishToPico(-(float)smoothed_norm_x_, 0.0f, (float)ctx->target_depth, 0);
         }
         return BT::NodeStatus::RUNNING;
@@ -289,13 +267,6 @@ BT::NodeStatus DriveThruGate::onRunning() {
             // NOTE: After 8 missed frames, we assume the gate is cleared.
             if (gate_lost_frames_ >= 8) {
                 RCLCPP_INFO(ctx->node->get_logger(), "[DriveThruGate] Gate cleared.");
-
-                if (staystill_ > 0.01) {
-                    phase_            = Phase::STAY_STILL;
-                    stay_still_start_ = std::chrono::steady_clock::now();
-                    ctx->stopMotion();
-                    return BT::NodeStatus::RUNNING;
-                }
                 ctx->stopMotion();
                 return BT::NodeStatus::SUCCESS;
             }
@@ -363,8 +334,6 @@ BT::NodeStatus OrbitPole::onRunning() {
             phase_ = Phase::SURGE;
             start_time_ = ctx->node->get_clock()->now().seconds();
         } else {
-        
-       
             ctx->publishToPico((float)yaw_err, 0.0f,(float)ctx->target_depth, 0);
         }
         return BT::NodeStatus::RUNNING;
