@@ -175,7 +175,14 @@ class UnifiedDetectionNode(Node):
 
         # --- ZED SDK NATIVE YOLO DETECTIONS ---
         for obj in current_zed_objects:
+            cls_id = obj.label_id
+            cls_name = YOLO_CLASS_MAP.get(cls_id, "preq_gate")
+
             if not obj.bounding_box_2d.corners:
+                self.get_logger().info(
+                    f'{cls_name} not detected.',
+                    throttle_duration_sec=2.0
+                )
                 continue
             
             corners = obj.bounding_box_2d.corners
@@ -185,8 +192,6 @@ class UnifiedDetectionNode(Node):
             y1, y2 = int(min(y_coords)), int(max(y_coords))
             bbox = (x1, y1, x2, y2)
 
-            cls_id = obj.label_id
-            cls_name = YOLO_CLASS_MAP.get(cls_id, "preq_gate") # FIXED MAPPING
             conf = float(obj.confidence) / 100.0
             
             # FIXED: ZED SDK camera framework defines index [2] as forward optical depth
@@ -210,6 +215,9 @@ class UnifiedDetectionNode(Node):
 
         # --- HSV: POLE DETECTIONS ---
         hsv_bboxes = self.get_hsv_bboxes(frame)
+        if not hsv_bboxes:
+            self.get_logger().info('preq_pole not detected.', throttle_duration_sec=2.0)
+
         for bbox in hsv_bboxes:
             x1, y1, x2, y2 = bbox
             obj_id = f'hsv_pole_{tracking_id}'
@@ -233,6 +241,7 @@ class UnifiedDetectionNode(Node):
             
             tracking_id += 1
 
+
         # Clean up stale history
         for old_id in list(self.depth_history.keys()):
             if old_id not in current_ids:
@@ -249,7 +258,7 @@ class UnifiedDetectionNode(Node):
         self.detection_pub.publish(det_array)
         self.detection3d_pub.publish(det3d_array)
 
-def main(args=None):
+def main(args=Nonqe):
     rclpy.init(args=args)
     node = UnifiedDetectionNode()
     try:
