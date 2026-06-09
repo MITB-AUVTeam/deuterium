@@ -25,11 +25,13 @@ UPPER_RED2 = np.array([180, 255, 255])
 
 MIN_CONTOUR_AREA = 500
 
-# FIXED: YOLO CLASS MAPPING SYNCED WITH C++ BT_NODES
+# YOLO CLASS MAPPING SYNCED WITH C++ BT_NODES
 YOLO_CLASS_MAP = {
     0: 'preq_gate',
     1: 'preq_gate'
 }
+
+DETECTION_CONFIDENCE_THRESHOLD = 0.4  # Minimum confidence for detection publication
 
 class UnifiedDetectionNode(Node):
     def __init__(self):
@@ -185,14 +187,15 @@ class UnifiedDetectionNode(Node):
             bbox = (x1, y1, x2, y2)
 
             cls_id = obj.label_id
-            cls_name = YOLO_CLASS_MAP.get(cls_id, "preq_gate") # FIXED MAPPING
+            cls_name = YOLO_CLASS_MAP.get(cls_id, "preq_gate")
             conf = float(obj.confidence) / 100.0
-            
-            # FIXED: ZED SDK camera framework defines index [2] as forward optical depth
-            pos = (float(obj.position[0]), float(obj.position[1]), float(obj.position[2]))
 
-            #need to verify whether or not distance is [0] or [2]
-            distance = float(obj.position[0]) 
+            if conf < DETECTION_CONFIDENCE_THRESHOLD:
+                continue
+
+            # ZED SDK camera framework: need to verify whether position[0] or position[2] is forward depth
+            pos = (float(obj.position[0]), float(obj.position[1]), float(obj.position[2]))
+            distance = float(obj.position[0])  # TODO: confirm axis — likely should be position[2]
 
             obj_id = f'yolo_{cls_name}_{tracking_id}'
             current_ids.add(obj_id)
@@ -219,16 +222,17 @@ class UnifiedDetectionNode(Node):
             raw_depth = self.get_depth_from_depthmap(depth_np, bbox)
             raw_depth = raw_depth if raw_depth is not None else 0.0
             distance = self.smooth_depth(obj_id, raw_depth)
-            
-            # FIXED: Map distance cleanly to Z index (pos[2]) so behavior tree reads it properly
-           
-           #changed the order here from (0,0,distance)
-            pos = (0.0, 0.0,distance)
+
+            hsv_confidence = 0.5
+            if hsv_confidence < DETECTION_CONFIDENCE_THRESHOLD:
+                continue
+
+            pos = (0.0, 0.0, distance)
 
             det_array.detections.append(
-                self.build_custom_det(img_msg.header, bbox, 'preq_pole', 0.5, pos, tracking_id))
+                self.build_custom_det(img_msg.header, bbox, 'preq_pole', hsv_confidence, pos, tracking_id))
             det3d_array.detections.append(
-                self.build_det3d(img_msg.header, bbox, 'preq_pole', 0.5, pos))
+                self.build_det3d(img_msg.header, bbox, 'preq_pole', hsv_confidence, pos))
 
             label = f'preq_pole | {distance:.2f}m'
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
@@ -236,7 +240,8 @@ class UnifiedDetectionNode(Node):
             
             tracking_id += 1
 
-        
+        if not det_array.detections:
+            self.get_logger().warn('No detections published this frame (YOLO + HSV both empty).', throttle_duration_sec=2.0)
 
         # Clean up stale history
         for old_id in list(self.depth_history.keys()):
