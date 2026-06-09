@@ -31,6 +31,9 @@ YOLO_CLASS_MAP = {
     1: 'preq_gate'
 }
 
+# CONFIDENCE THRESHOLDS
+DETECTION_CONFIDENCE_THRESHOLD = 0.4  # Minimum confidence for detection publication
+
 class UnifiedDetectionNode(Node):
     def __init__(self):
         super().__init__('unified_detection_node')
@@ -194,6 +197,10 @@ class UnifiedDetectionNode(Node):
             #need to verify whether or not distance is [0] or [2]
             distance = float(obj.position[0]) 
 
+            # FILTER: Skip detections below confidence threshold
+            if conf < DETECTION_CONFIDENCE_THRESHOLD:
+                continue
+            
             obj_id = f'yolo_{cls_name}_{tracking_id}'
             current_ids.add(obj_id)
 
@@ -224,17 +231,25 @@ class UnifiedDetectionNode(Node):
            
            #changed the order here from (0,0,distance)
             pos = (0.0, 0.0,distance)
+            
+            hsv_confidence = 0.5
+            
+            # FILTER: Skip detections below confidence threshold
+            if hsv_confidence < DETECTION_CONFIDENCE_THRESHOLD:
+                continue
 
             det_array.detections.append(
-                self.build_custom_det(img_msg.header, bbox, 'preq_pole', 0.5, pos, tracking_id))
+                self.build_custom_det(img_msg.header, bbox, 'preq_pole', hsv_confidence, pos, tracking_id))
             det3d_array.detections.append(
-                self.build_det3d(img_msg.header, bbox, 'preq_pole', 0.5, pos))
+                self.build_det3d(img_msg.header, bbox, 'preq_pole', hsv_confidence, pos))
 
             label = f'preq_pole | {distance:.2f}m'
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.putText(frame, label, (x1, max(y1 - 10, 15)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             
             tracking_id += 1
+
+        
 
         # Clean up stale history
         for old_id in list(self.depth_history.keys()):
