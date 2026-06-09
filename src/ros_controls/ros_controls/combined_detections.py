@@ -236,7 +236,11 @@ class UnifiedDetectionNode(Node):
             
             tracking_id += 1
 
-        
+        if not det_array.detections:
+            self.get_logger().info('No detections published this frame (YOLO + HSV both)')
+       
+
+
 
         # Clean up stale history
         for old_id in list(self.depth_history.keys()):
