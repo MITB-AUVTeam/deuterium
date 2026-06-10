@@ -237,8 +237,6 @@ public:
   void onHalted() override;
 
 private:
-  enum class Phase { ALIGN, APPROACH };
-  Phase phase_ = Phase::ALIGN;
   std::string target_object_;
   double threshold_ = 1.5;
   float smoothed_norm_x_ = 0.0f;
