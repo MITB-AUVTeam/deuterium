@@ -165,8 +165,7 @@ BT::NodeStatus ApproachObject::onStart() {
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
 
-    phase_            = Phase::ALIGN;
-    smoothed_norm_x_  = 0.0f;
+    smoothed_norm_x_ = 0.0f;
 
     RCLCPP_INFO(ctx->node->get_logger(), "[ApproachObject] Approaching %s to %.1f m", target_object_.c_str(), threshold_);
     return BT::NodeStatus::RUNNING;
@@ -179,39 +178,19 @@ BT::NodeStatus ApproachObject::onRunning() {
     double ox, oy, oz;
     bool seen = ctx->getObjectPosition(target_object_, ox, oy, oz);
 
-    if (phase_ == Phase::ALIGN) {
-        if (!seen) {
-            ctx->publishToPico(ctx->base_yaw_speed, 0.0f,(float)ctx->target_depth, 0);
-            return BT::NodeStatus::RUNNING;
-        }
-
-        double raw_norm_x = ox / std::max(oz, 0.5);
-        smoothed_norm_x_  = 0.7f * smoothed_norm_x_ + 0.3f * (float)raw_norm_x;
-
-        float deadband = (target_object_ == "GATE") ? ctx->gate_align_deadband : ctx->pole_align_deadband;
-        if (std::abs(smoothed_norm_x_) < deadband) {
-            phase_ = Phase::APPROACH;
-            RCLCPP_INFO(ctx->node->get_logger(), "[ApproachObject] Aligned. Moving to threshold.");
-        } else {
-            ctx->publishToPico(-(float)smoothed_norm_x_, 0.0f, (float)ctx->target_depth, 0);
-        }
+    if (!seen) {
+        ctx->publishToPico(0.0f, 0.0f, (float)ctx->target_depth, 0);
         return BT::NodeStatus::RUNNING;
     }
 
-    if (phase_ == Phase::APPROACH) {
-        if (!seen) { phase_ = Phase::ALIGN; return BT::NodeStatus::RUNNING; }
-
-        if (oz < threshold_) {
-            ctx->stopMotion();
-            return BT::NodeStatus::SUCCESS;
-        }
-
-        double raw_norm_x = ox / std::max(oz, 0.5);
-        smoothed_norm_x_  = 0.7f * smoothed_norm_x_ + 0.3f * (float)raw_norm_x;
-        ctx->publishToPico(-(float)smoothed_norm_x_, ctx->base_surge_speed, (float)ctx->target_depth, 0);
-        return BT::NodeStatus::RUNNING;
+    if (oz < threshold_) {
+        ctx->stopMotion();
+        return BT::NodeStatus::SUCCESS;
     }
 
+    double raw_norm_x = ox / std::max(oz, 0.5);
+    smoothed_norm_x_  = 0.7f * smoothed_norm_x_ + 0.3f * (float)raw_norm_x;
+    ctx->publishToPico(-(float)smoothed_norm_x_, ctx->base_surge_speed, (float)ctx->target_depth, 0);
     return BT::NodeStatus::RUNNING;
 }
 
