@@ -258,19 +258,22 @@ public:
       : BT::StatefulActionNode(name, config) {}
   static BT::PortsList providedPorts() {
     return {BT::InputPort<std::string>("object"),
-            BT::InputPort<double>("staystill")};
+            BT::InputPort<double>("staystill", 0.0,
+                                  "Seconds to pause at threshold before orbiting")};
   }
   BT::NodeStatus onStart() override;
   BT::NodeStatus onRunning() override;
   void onHalted() override;
 
 private:
-  enum class Phase { TURN, SURGE, STAY_STILL };
-  Phase phase_ = Phase::TURN;
+  enum class Phase { STAY_STILL, TURN, SURGE };
+  Phase phase_ = Phase::STAY_STILL;
   std::string target_object_;
-  double target_yaw_ = 0.0, start_time_ = 0.0;
+  double target_yaw_ = 0.0;
+  double surge_start_ = 0.0;
   int steps_completed_ = 0;
   double staystill_ = 0.0;
+  bool turn_target_set_ = false;
   std::chrono::steady_clock::time_point stay_still_start_;
 };
 

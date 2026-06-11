@@ -305,72 +305,102 @@ BT::NodeStatus DriveThruGate::onRunning() {
 void DriveThruGate::onHalted() { getCtx(config())->stopMotion(); }
 
 // --- OrbitPole --------------------------------------------------------------
+//
+// Square orbit: 4 legs, all left (CCW) turns of 90°.
+//   Leg 0: surge X   (half-side — starts at midpoint of one side)
+//   Leg 1: surge 2X  (full side)
+//   Leg 2: surge 2X  (full side)
+//   Leg 3: surge 2X  (full side)
+// where X = orbit_surge_duration from YAML.
 
 BT::NodeStatus OrbitPole::onStart() {
     auto obj = getInput<std::string>("object");
     if (!obj) throw BT::RuntimeError("OrbitPole: missing [object]");
-    target_object_ = obj.value();
-    staystill_      = getInput<double>("staystill").value_or(0.0);
-    
+    target_object_   = obj.value();
+    staystill_       = getInput<double>("staystill").value_or(0.0);
     steps_completed_ = 0;
-    phase_ = Phase::TURN; // Starts with turn, assuming ApproachObject ran first.
+    turn_target_set_ = false;
+
+    if (staystill_ > 0.01) {
+        phase_ = Phase::STAY_STILL;
+        stay_still_start_ = std::chrono::steady_clock::now();
+        auto ctx = getCtx(config());
+        ctx->stopMotion();
+        RCLCPP_INFO(ctx->node->get_logger(),
+                    "[OrbitPole] Pausing at threshold for %.1f s.", staystill_);
+    } else {
+        phase_ = Phase::TURN;
+        RCLCPP_INFO(getCtx(config())->node->get_logger(),
+                    "[OrbitPole] Starting square orbit.");
+    }
     return BT::NodeStatus::RUNNING;
 }
 
 BT::NodeStatus OrbitPole::onRunning() {
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
-    double cur_yaw = ctx->getCurrentYaw();
 
+    // --- Initial pause at threshold point ---
     if (phase_ == Phase::STAY_STILL) {
-        if (std::chrono::duration<double>(std::chrono::steady_clock::now() - stay_still_start_).count() >= staystill_) {
-            return BT::NodeStatus::SUCCESS;
+        double elapsed = std::chrono::duration<double>(
+            std::chrono::steady_clock::now() - stay_still_start_).count();
+        if (elapsed >= staystill_) {
+            phase_ = Phase::TURN;
+            turn_target_set_ = false;
+            RCLCPP_INFO(ctx->node->get_logger(), "[OrbitPole] Starting square orbit.");
         }
         ctx->stopMotion();
         return BT::NodeStatus::RUNNING;
     }
 
-    if (steps_completed_ >= 8) {
-        if (staystill_ > 0.01) {
-            phase_ = Phase::STAY_STILL;
-            stay_still_start_ = std::chrono::steady_clock::now();
-            RCLCPP_INFO(ctx->node->get_logger(), "[OrbitPole] Orbit complete. Staying still.");
-            ctx->stopMotion();
-            return BT::NodeStatus::RUNNING;
-        }
+    // --- All 4 legs complete ---
+    if (steps_completed_ >= 4) {
         ctx->stopMotion();
+        RCLCPP_INFO(ctx->node->get_logger(), "[OrbitPole] Square orbit complete.");
         return BT::NodeStatus::SUCCESS;
     }
 
+    double cur_yaw = ctx->getCurrentYaw();
+
+    // --- TURN: right 90° for leg 0 (go tangential), left 90° for legs 1-3 ---
     if (phase_ == Phase::TURN) {
-        // Orbit logic: turn tangent (relative angle from YAML) then surge.
-        if (start_time_ == 0.0) { // First time in this step's turn
-             target_yaw_ = normalizeAngle(cur_yaw - (ctx->orbit_step_angle * M_PI / 180.0));
-             start_time_ = 1.0; // flag
+        if (!turn_target_set_) {
+            double turn_angle = (steps_completed_ == 0) ? -M_PI / 2.0 : M_PI / 2.0;
+            target_yaw_ = normalizeAngle(cur_yaw + turn_angle);
+            turn_target_set_ = true;
         }
 
         double yaw_err = normalizeAngle(target_yaw_ - cur_yaw);
         if (std::abs(yaw_err) < 0.08) {
             phase_ = Phase::SURGE;
-            start_time_ = ctx->node->get_clock()->now().seconds();
+            surge_start_ = ctx->node->get_clock()->now().seconds();
+            RCLCPP_INFO(ctx->node->get_logger(),
+                        "[OrbitPole] Turn complete, surging (leg %d/4).", steps_completed_ + 1);
         } else {
-            ctx->publishToPico((float)yaw_err, 0.0f,(float)ctx->target_depth, 0);
+            ctx->publishToPico((float)yaw_err, 0.0f, (float)ctx->target_depth, 0);
         }
         return BT::NodeStatus::RUNNING;
     }
 
+    // --- SURGE: X for first leg, 2X for legs 2-4 ---
     if (phase_ == Phase::SURGE) {
-        if (ctx->node->get_clock()->now().seconds() - start_time_ >= ctx->orbit_surge_duration) {
-            phase_ = Phase::TURN;
-            start_time_ = 0.0; // reset flag
+        double duration = (steps_completed_ == 0)
+            ? ctx->orbit_surge_duration
+            : ctx->orbit_surge_duration * 2.0;
+
+        if (ctx->node->get_clock()->now().seconds() - surge_start_ >= duration) {
             steps_completed_++;
-            RCLCPP_INFO(ctx->node->get_logger(), "[OrbitPole] Step %d/8 complete.", steps_completed_);
-            ctx->stopMotion(); 
+            phase_ = Phase::TURN;
+            turn_target_set_ = false;
+            ctx->stopMotion();
+            RCLCPP_INFO(ctx->node->get_logger(),
+                        "[OrbitPole] Leg %d/4 complete.", steps_completed_);
         } else {
             ctx->publishToPico(0.0f, ctx->base_surge_speed, (float)ctx->target_depth, 0);
         }
         return BT::NodeStatus::RUNNING;
     }
+
     return BT::NodeStatus::RUNNING;
 }
 

@@ -41,7 +41,7 @@ def generate_launch_description():
         ),
     ])
     
-    combined_detections_hsv_pose = Node(
+    combined_detections = Node(
     	package='ros_controls',
     	executable='combined_detections',
     )
@@ -51,7 +51,19 @@ def generate_launch_description():
     	executable='prequalification',
     	parameters=[mission_params],
     )
+    hsv_tuned_detections=Node(
+        package='ros_controls',
+    	executable='hsv_tuned_detections',
+    )
+
+    combined_detections_v2=Node(
+    	package='ros_controls',
+    	executable='combined_detections_v2',
+    )
     
     
 
-    return LaunchDescription([cam_front,combined_detections_hsv_pose,prequal_bt])
+    #return LaunchDescription([cam_front,combined_detections,prequal_bt])
+
+    #if this doesn't work uncomment the above one to go back to first version
+    return LaunchDescription([cam_front,combined_detections_v2,prequal_bt])
