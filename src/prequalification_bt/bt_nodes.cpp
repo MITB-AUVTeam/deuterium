@@ -273,8 +273,6 @@ BT::NodeStatus DriveThruGate::onStart() {
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
 
-    // ApproachObject has already centered the gate — lock heading and drive.
-    locked_heading_   = ctx->getCurrentYaw();
     gate_lost_frames_ = 0;
 
     RCLCPP_INFO(ctx->node->get_logger(), "[DriveThruGate] Driving through gate.");
@@ -285,23 +283,22 @@ BT::NodeStatus DriveThruGate::onRunning() {
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
 
-    double ox, oy, oz;
-    bool gate_seen = ctx->getObjectPosition("GATE", ox, oy, oz);
+    double ox, oy, oz, score = 0.0;
+    bool gate_seen = ctx->getObjectPosition("GATE", ox, oy, oz, &score);
 
     if (!gate_seen) {
         gate_lost_frames_++;
-        // NOTE: After 8 missed frames, we assume the gate is cleared.
         if (gate_lost_frames_ >= 8) {
             RCLCPP_INFO(ctx->node->get_logger(), "[DriveThruGate] Gate cleared.");
             ctx->stopMotion();
             return BT::NodeStatus::SUCCESS;
         }
-    } else {
-        gate_lost_frames_ = 0;
+        ctx->publishToPico(0.0f, ctx->base_surge_speed, (float)ctx->target_depth, 0);
+        return BT::NodeStatus::RUNNING;
     }
 
-    double yaw_err = normalizeAngle(locked_heading_ - ctx->getCurrentYaw());
-    ctx->publishToPico((float)yaw_err, ctx->base_surge_speed, (float)ctx->target_depth, 0);
+    gate_lost_frames_ = 0;
+    ctx->publishToPico(0.0f, ctx->base_surge_speed, (float)ctx->target_depth, 0);
     return BT::NodeStatus::RUNNING;
 }
 

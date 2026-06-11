@@ -230,7 +230,6 @@ public:
   void onHalted() override;
 
 private:
-  double locked_heading_ = 0.0;
   int gate_lost_frames_ = 0;
 };
 
