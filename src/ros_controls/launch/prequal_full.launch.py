@@ -66,4 +66,4 @@ def generate_launch_description():
     #return LaunchDescription([cam_front,combined_detections,prequal_bt])
 
     #if this doesn't work uncomment the above one to go back to first version
-    return LaunchDescription([cam_front,combined_detections_v2,prequal_bt])
+    return LaunchDescription([cam_front,combined_detections,prequal_bt])
