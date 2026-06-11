@@ -22,7 +22,7 @@
         object_detection:
             od_enabled: true
             detection_model: 'CUSTOM_YOLOLIKE_BOX_OBJECTS'
-            custom_onnx_file: '/home/cupcake/Desktop/prequal-task/src/ros_controls/models/Pq_gate.onnx'
+            custom_onnx_file: '/home/cupcake/Desktop/deuterium/src/ros_controls/models/new_model_prequal.onnx'
             confidence_threshold: 50.0
             max_range: 15.0
 
