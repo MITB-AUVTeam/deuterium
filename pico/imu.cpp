@@ -78,6 +78,7 @@ void imu::init() {
     int16_t raw_yaw0 = (int16_t)((buffer[1] << 8) | buffer[0]);
     roll0 = (raw_roll0 / 900.0f);
     pitch0 = (raw_pitch0 / 900.0f);
+    yaw0 = (raw_yaw0/900.0f);
 
 #if DEBUG_MODE
     printf("Roll, Pitch, Yaw locked\n");
@@ -97,6 +98,7 @@ void imu::read_euler() {
 
     state.roll = wrapAngle(raw_roll / 900.0f - roll0);
     state.pitch = wrapAngle(raw_pitch / 900.0f - pitch0);
+    // state.yaw = wrapAngle(raw_pitch / 900.0f - yaw0);
 }
 
 void imu::ask_gyro() {
