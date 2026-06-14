@@ -26,11 +26,11 @@ int main(int argc, char** argv) {
     ctx->node      = node;
 
     // Declare and Load Parameters (with default values)
-    node->declare_parameter("base_surge_speed", 0.7);
+    node->declare_parameter("base_surge_speed", 0.9);
     node->declare_parameter("base_yaw_speed", 0.1);
-    node->declare_parameter("gate_conf_thresh", 0.6);
+    node->declare_parameter("gate_conf_thresh", 0.5);
     node->declare_parameter("pole_conf_thresh", 0.3);
-    node->declare_parameter("gate_lock_thresh", 0.70);
+    node->declare_parameter("gate_lock_thresh", 0.50);
     node->declare_parameter("pole_lock_thresh", 0.45);
     node->declare_parameter("depth_tolerance", 0.15);
     node->declare_parameter("gate_align_deadband", 0.04);

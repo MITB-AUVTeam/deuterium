@@ -17,6 +17,7 @@ static std::shared_ptr<RobotContext> getCtx(const BT::NodeConfig& cfg) {
     return ctx;
 }
 double turn_start_ = 0.0;
+double target_yaw_ = 0;
 // --- AllSystemsOK -----------------------------------------------------------
 
 BT::NodeStatus AllSystemsOK::onStart() {
@@ -243,6 +244,8 @@ BT::NodeStatus ApproachObject::onRunning() {
             "[ApproachObject] Locked onto %s (conf %.2f). Surging.", target_object_.c_str(), score);
     }
 
+    RCLCPP_INFO(ctx->node->get_logger(),"ox: %.2f , oy: %.2f , oz: %.2f",ox,oy,oz);
+
     // Locked phase: surge toward object while keeping it centered laterally.
     if (seen) {
         double raw_norm_x = ox / std::max(oz, 0.5);
@@ -250,8 +253,11 @@ BT::NodeStatus ApproachObject::onRunning() {
 
         if (oz < threshold_) {
             ctx->stopMotion();
+            RCLCPP_INFO(ctx->node->get_logger(),"SUCCEEDED VALUES :=> ox: %.2f , oy: %.2f , oz: %.2f",ox,oy,oz);
             return BT::NodeStatus::SUCCESS;
         }
+        RCLCPP_INFO(ctx->node->get_logger(),"MEOW MEOWMEOWMEOWMEOWMEOWMEOWMEOW");
+
 
         float deadband = (target_object_ == "GATE") ? ctx->gate_align_deadband
             : ctx->pole_align_deadband;
@@ -275,6 +281,7 @@ BT::NodeStatus DriveThruGate::onStart() {
     rclcpp::spin_some(ctx->node);
 
     gate_lost_frames_ = 0;
+    target_yaw_ = ctx->getCurrentYaw();
 
     RCLCPP_INFO(ctx->node->get_logger(), "[DriveThruGate] Driving through gate.");
     return BT::NodeStatus::RUNNING;
@@ -287,6 +294,9 @@ BT::NodeStatus DriveThruGate::onRunning() {
     double ox, oy, oz, score = 0.0;
     bool gate_seen = ctx->getObjectPosition("GATE", ox, oy, oz, &score);
 
+    double current_yaw = ctx->getCurrentYaw();
+    float yaw_cmd = (float)normalizeAngle(target_yaw_ - current_yaw);
+
     if (!gate_seen) {
         gate_lost_frames_++;
         if (gate_lost_frames_ >= 8) {
@@ -294,15 +304,14 @@ BT::NodeStatus DriveThruGate::onRunning() {
             ctx->stopMotion();
             return BT::NodeStatus::SUCCESS;
         }
-        ctx->publishToPico(0.0f, ctx->base_surge_speed, (float)ctx->target_depth, 0);
+        ctx->publishToPico(yaw_cmd, ctx->base_surge_speed, (float)ctx->target_depth, 0);
         return BT::NodeStatus::RUNNING;
     }
 
     gate_lost_frames_ = 0;
-    ctx->publishToPico(0.0f, ctx->base_surge_speed, (float)ctx->target_depth, 0);
+    ctx->publishToPico(yaw_cmd, ctx->base_surge_speed, (float)ctx->target_depth, 0);
     return BT::NodeStatus::RUNNING;
 }
-
 void DriveThruGate::onHalted() { getCtx(config())->stopMotion(); }
 
 // --- OrbitPole --------------------------------------------------------------

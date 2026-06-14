@@ -22,35 +22,35 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
             <!-- 2. GATE MISSION -->
             
             <!-- NOTE: Change 'threshold' here to set how close to get to the gate before passing -->
-            <!-- <ApproachObject object="GATE" threshold="1.0"/> -->
+            <ApproachObject object="GATE" threshold="0.1"/>
             
             <!-- NOTE: Surge through and clear the gate (Uses frame-counting in C++) -->
-            <!-- <DriveThruGate/> -->
+            <DriveThruGate/>
 
             <!-- 3. POLE MISSION -->
-            <Fallback name="find_pole">
+            <!-- <Fallback name="find_pole">
                 <IsObjectSeen object="POLE"/>
                 <Do360Turn success_when_seen="POLE"/>
-            </Fallback>
+            </Fallback> -->
             
             <!-- NOTE: Change 'threshold' here to set the radius of the orbit approach -->
-            <ApproachObject object="POLE" threshold="1.0"/>
+            <!-- <ApproachObject object="POLE" threshold="1.0"/> -->
 
             <!-- NOTE: 4-leg square orbit. Pauses 3s at threshold, then X, 2X, 2X, 2X surges.
                  Surge duration X is orbit_surge_duration in mission_params.yaml. -->
-            <OrbitPole object="POLE" staystill="3.0"/>
+            <!-- <OrbitPole object="POLE" staystill="3.0"/> -->
             
-            <!-- 4. RETURN HOME (Reactive) -->
-            <Fallback name="find_gate_home">
-                <IsObjectSeen object="GATE"/>
-                <Do360Turn success_when_seen="GATE"/>
-            </Fallback>
+            4. RETURN HOME (Reactive)
+            <!-- <Fallback name="find_gate_home"> -->
+                <!-- <IsObjectSeen object="GATE"/> -->
+                <!-- <Do360Turn success_when_seen="GATE"/> -->
+            <!-- </Fallback> -->
 
             <!-- NOTE: Approach home gate to threshold -->
-            <ApproachObject object="GATE" threshold="1.0"/>
+            <!-- <ApproachObject object="GATE" threshold="1.0"/> -->
 
             <!-- NOTE: Clear home gate -->
-            <DriveThruGate/>
+            <!-- <DriveThruGate/> -->
         </Sequence>
     </BehaviorTree>
 
