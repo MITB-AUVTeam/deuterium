@@ -18,7 +18,7 @@ PID pid_roll = { 10, 0, 50, 0, 0 };
 PID pid_pitch = { 0, 0, 0, 0, 0 };
 PID pid_z = { 60, 10, 10, 0, 0 };
 PID pid_x = { 1, 0, 0, 0, 0 };
-PID pid_yaw = { 7.5, 0, 1, 0, 0 };
+PID pid_yaw = { 6.5, 0, 0.5, 0, 0 };
 
 // LQR
 float K_tau[2][2] = {
@@ -29,7 +29,7 @@ float K_tau[2][2] = {
 // constants
 const float STB_LOOP_DT = STB_LOOP_MS / 1000.0f;
 
-const float Fz_eq = 12;
+const float Fz_eq = 3;
 const float F_MIN = -23.3f;
 const float F_MAX = 29.8f;
 const float tau_scale = 1.0f;
@@ -90,8 +90,8 @@ void control::stbUpdate() {
     VR = constrain(VR, F_MIN, F_MAX);
     VL = constrain(VL, F_MIN, F_MAX);
 
-    throttle.VL = thrustToDshot(-VL);
-    throttle.VR = thrustToDshot(VR);
+    throttle.VL = thrustToDshot(VL);
+    throttle.VR = thrustToDshot(-VR);
     throttle.VB = thrustToDshot(VB);
 }
 
