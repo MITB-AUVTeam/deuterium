@@ -15,7 +15,6 @@
 #include <memory>
 #include <string>
 #include <thread>
-#include <fstream>
 
 int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
@@ -27,21 +26,25 @@ int main(int argc, char** argv) {
     ctx->node      = node;
 
     // Declare and Load Parameters (with default values)
-    node->declare_parameter("base_surge_speed", 0.1);
+    node->declare_parameter("base_surge_speed", 0.9);
     node->declare_parameter("base_yaw_speed", 0.1);
-    node->declare_parameter("gate_conf_thresh", 0.6);
+    node->declare_parameter("gate_conf_thresh", 0.5);
     node->declare_parameter("pole_conf_thresh", 0.3);
+    node->declare_parameter("gate_lock_thresh", 0.50);
+    node->declare_parameter("pole_lock_thresh", 0.45);
     node->declare_parameter("depth_tolerance", 0.15);
     node->declare_parameter("gate_align_deadband", 0.04);
     node->declare_parameter("pole_align_deadband", 0.06);
     node->declare_parameter("orbit_surge_duration", 4.0);
-    node->declare_parameter("orbit_step_angle", 85.0);
+    node->declare_parameter("orbit_step_angle", 70.0);
 
     auto update_ctx_params = [node, ctx]() {
         ctx->base_surge_speed = node->get_parameter("base_surge_speed").as_double();
         ctx->base_yaw_speed   = node->get_parameter("base_yaw_speed").as_double();
         ctx->gate_conf_thresh = node->get_parameter("gate_conf_thresh").as_double();
         ctx->pole_conf_thresh = node->get_parameter("pole_conf_thresh").as_double();
+        ctx->gate_lock_thresh = node->get_parameter("gate_lock_thresh").as_double();
+        ctx->pole_lock_thresh = node->get_parameter("pole_lock_thresh").as_double();
         ctx->depth_tolerance  = node->get_parameter("depth_tolerance").as_double();
         ctx->gate_align_deadband = node->get_parameter("gate_align_deadband").as_double();
         ctx->pole_align_deadband = node->get_parameter("pole_align_deadband").as_double();
@@ -66,7 +69,7 @@ int main(int argc, char** argv) {
         });
 
     // Actuator publishers
-    ctx->pico_pub = node->create_publisher<custom_interfaces::msg::ControlCommand>("/control_cmd", 10);
+    ctx->pico_pub = node->create_publisher<auv_msgs::msg::ControlCommand>("/control_cmd", 10);
 
     // IMU subscription (orientation / yaw)
     ctx->imu_sub =
@@ -125,14 +128,6 @@ int main(int argc, char** argv) {
     // --- Behavior Tree Initialization ---------------------------------------
     BT::BehaviorTreeFactory factory;
     registerAllNodes(factory);
-
-    // Dump TreeNodesModel XML for Groot2 visualization
-    {
-        std::string xml_models = BT::writeTreeNodesModelXML(factory);
-        std::ofstream model_file("bt_nodes_model.xml");
-        model_file << xml_models;
-        RCLCPP_INFO(node->get_logger(), "[main] Written bt_nodes_model.xml for Groot2");
-    }
 
     // Locate the XML mission file
     std::string xml_path;

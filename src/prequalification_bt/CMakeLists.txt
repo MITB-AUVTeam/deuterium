@@ -11,7 +11,7 @@ find_package(geometry_msgs    REQUIRED)
 find_package(sensor_msgs      REQUIRED)
 find_package(std_msgs         REQUIRED)
 find_package(vision_msgs      REQUIRED)
-find_package(custom_interfaces REQUIRED)
+find_package(auv_msgs         REQUIRED)
 find_package(tf2              REQUIRED)
 find_package(ament_index_cpp  REQUIRED)
 find_package(diagnostic_msgs  REQUIRED)
@@ -35,7 +35,7 @@ ament_target_dependencies(prequalification
     sensor_msgs
     std_msgs
     vision_msgs
-    custom_interfaces
+    auv_msgs
     tf2
     ament_index_cpp
     diagnostic_msgs

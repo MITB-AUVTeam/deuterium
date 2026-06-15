@@ -12,7 +12,8 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
     <BehaviorTree ID="PreQualification_Task">
         <Sequence name="main_mission">
             <!-- 0. SYSTEMS CHECK -->
-            <AllSystemsOK name="check_systems"/>
+            <!-- NOTE: Change timeout_s here to give sensors more time to come online -->
+            <AllSystemsOK name="check_systems" timeout_s="20.0"/>
 
             <!-- 1. INITIALIZE -->
             <!-- NOTE: Change target_depth here (meters, positive-down) for the initial dive -->
@@ -35,7 +36,8 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
             <!-- NOTE: Change 'threshold' here to set the radius of the orbit approach -->
             <ApproachObject object="POLE" threshold="1.0"/>
 
-            <!-- NOTE: 8-step Octagon orbit (Surge duration is in mission_params.yaml) -->
+            <!-- NOTE: 4-leg square orbit. Pauses 3s at threshold, then X, 2X, 2X, 2X surges.
+                 Surge duration X is orbit_surge_duration in mission_params.yaml. -->
             <OrbitPole object="POLE" staystill="3.0"/>
             
             <!-- 4. RETURN HOME (Reactive) -->
@@ -53,7 +55,9 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
     </BehaviorTree>
 
     <TreeNodesModel>
-        <Condition ID="AllSystemsOK"/>
+        <Action ID="AllSystemsOK">
+            <input_port name="timeout_s" type="double" default="20.0">Seconds to wait before aborting</input_port>
+        </Action>
         <Condition ID="IsObjectSeen">
             <input_port name="object" type="std::string">GATE or POLE</input_port>
         </Condition>
@@ -70,7 +74,7 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
         <Action ID="DriveThruGate"/>
         <Action ID="OrbitPole">
             <input_port name="object" type="std::string">Object to orbit</input_port>
-            <input_port name="staystill" type="double" default="0.0">Seconds to stay still after</input_port>
+            <input_port name="staystill" type="double" default="0.0">Seconds to pause at threshold before orbiting</input_port>
         </Action>
     </TreeNodesModel>
 

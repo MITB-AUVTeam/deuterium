@@ -20,6 +20,22 @@
 
        
         object_detection:
-            od_enabled: false
-           
-        
+            od_enabled: true
+            detection_model: 'CUSTOM_YOLOLIKE_BOX_OBJECTS'
+            custom_onnx_file: '/home/cupcake/Desktop/prequal-task/src/ros_controls/models/Pq_gate.onnx'
+            confidence_threshold: 50.0
+            max_range: 15.0
+		
+            #custom_onnx_file: '/home/cupcake/Prequal/src/ros_controls/ros_controls/best.onnx'
+            custom_onnx_input_size: 608 # Change to 640 if trained at 640
+            custom_obj_det_config_file: '/home/cupcake/Desktop/prequal-task/src/ros_controls/config/custom_yolo.yaml'
+      
+            custom_class_count: 1 
+
+            class_000:
+                label: 'gate'
+                model_class_id: 0
+                enabled: true
+                confidence_threshold: 50.0
+                is_grounded: false
+                is_static: true
