@@ -1,4 +1,19 @@
+# ROS 2 Build & Workspace Outputs
 build/
 install/
 log/
+
+# OS Metadata files
 .DS_Store
+
+# VS Code / IDE Caches (To prevent the git add hang)
+.vscode/
+*.vc.db
+*.vc.db-shm
+*.vc.db-wal
+
+# The specific stereo dataset folder
+misc_camera_scripts/stereo_dataset_20260611_172557/
+
+# Wildcard: Catch ANY future date-stamped stereo datasets automatically
+misc_camera_scripts/stereo_dataset_*/
