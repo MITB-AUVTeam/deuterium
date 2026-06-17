@@ -220,53 +220,60 @@ BT::NodeStatus ApproachObject::onRunning() {
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
 
-    double ox, oy, oz, score = 0.0;
-    bool seen = ctx->getObjectPosition(target_object_, ox, oy, oz, &score);
+    // double ox, oy, oz, score = 0.0;
+    // bool seen = ctx->getObjectPosition(target_object_, ox, oy, oz, &score);
 
-    if (!locked_) {
-        if (!seen) {
-            ctx->publishToPico(0.0f, 0.0f, (float)ctx->target_depth, 0);
-            return BT::NodeStatus::RUNNING;
-        }
+    // if (!locked_) {
+    //     if (!seen) {
+    //         ctx->publishToPico(0.0f, 0.0f, (float)ctx->target_depth, 0);
+    //         return BT::NodeStatus::RUNNING;
+    //     }
 
-        double raw_norm_x = ox / std::max(oz, 0.5);
-        smoothed_norm_x_ = 0.7f * smoothed_norm_x_ + 0.3f * (float)raw_norm_x;
+    //     double raw_norm_x = ox / std::max(oz, 0.5);
+    //     smoothed_norm_x_ = 0.7f * smoothed_norm_x_ + 0.3f * (float)raw_norm_x;
 
-        float lock_thresh = (target_object_ == "GATE") ? ctx->gate_lock_thresh
-            : ctx->pole_lock_thresh;
-        if (score < lock_thresh) {
-            ctx->publishToPico(0.0f, 0.0f, (float)ctx->target_depth, 0);
-            return BT::NodeStatus::RUNNING;
-        }
+    //     float lock_thresh = (target_object_ == "GATE") ? ctx->gate_lock_thresh
+    //         : ctx->pole_lock_thresh;
+    //     if (score < lock_thresh) {
+    //         ctx->publishToPico(0.0f, 0.0f, (float)ctx->target_depth, 0);
+    //         return BT::NodeStatus::RUNNING;
+    //     }
 
-        locked_ = true;
-        RCLCPP_INFO(ctx->node->get_logger(),
-            "[ApproachObject] Locked onto %s (conf %.2f). Surging.", target_object_.c_str(), score);
-    }
+    //     locked_ = true;
+    //     RCLCPP_INFO(ctx->node->get_logger(),
+    //         "[ApproachObject] Locked onto %s (conf %.2f). Surging.", target_object_.c_str(), score);
+    // }
 
-    RCLCPP_INFO(ctx->node->get_logger(),"ox: %.2f , oy: %.2f , oz: %.2f",ox,oy,oz);
+    // RCLCPP_INFO(ctx->node->get_logger(),"ox: %.2f , oy: %.2f , oz: %.2f",ox,oy,oz);
 
-    // Locked phase: surge toward object while keeping it centered laterally.
-    if (seen) {
-        double raw_norm_x = ox / std::max(oz, 0.5);
-        smoothed_norm_x_ = 0.7f * smoothed_norm_x_ + 0.3f * (float)raw_norm_x;
+    // // Locked phase: surge toward object while keeping it centered laterally.
+    // if (seen) {
+    //     double raw_norm_x = ox / std::max(oz, 0.5);
+    //     smoothed_norm_x_ = 0.7f * smoothed_norm_x_ + 0.3f * (float)raw_norm_x;
 
-        if (oz < threshold_) {
-            ctx->stopMotion();
-            RCLCPP_INFO(ctx->node->get_logger(),"SUCCEEDED VALUES :=> ox: %.2f , oy: %.2f , oz: %.2f",ox,oy,oz);
-            return BT::NodeStatus::SUCCESS;
-        }
-        RCLCPP_INFO(ctx->node->get_logger(),"MEOW MEOWMEOWMEOWMEOWMEOWMEOWMEOW");
+    //     if (oz < threshold_) {
+    //         ctx->stopMotion();
+    //         RCLCPP_INFO(ctx->node->get_logger(),"SUCCEEDED VALUES :=> ox: %.2f , oy: %.2f , oz: %.2f",ox,oy,oz);
+    //         return BT::NodeStatus::SUCCESS;
+    //     }
+    //     RCLCPP_INFO(ctx->node->get_logger(),"MEOW MEOWMEOWMEOWMEOWMEOWMEOWMEOW");
 
 
-        float deadband = (target_object_ == "GATE") ? ctx->gate_align_deadband
-            : ctx->pole_align_deadband;
-        float yaw_cmd = (std::abs(smoothed_norm_x_) > deadband) ? smoothed_norm_x_ : 0.0f;
-        ctx->publishToPico(yaw_cmd, ctx->base_surge_speed, (float)ctx->target_depth, 0);
-    }
-    else {
-        // Object temporarily lost — hold last heading, keep closing distance.
-        ctx->publishToPico(0.0f, ctx->base_surge_speed, (float)ctx->target_depth, 0);
+    //     float deadband = (target_object_ == "GATE") ? ctx->gate_align_deadband
+    //         : ctx->pole_align_deadband;
+    //     float yaw_cmd = (std::abs(smoothed_norm_x_) > deadband) ? smoothed_norm_x_ : 0.0f;
+    //     ctx->publishToPico(yaw_cmd, ctx->base_surge_speed, (float)ctx->target_depth, 0);
+    // }
+    // else {
+    //     // Object temporarily lost — hold last heading, keep closing distance.
+    //     ctx->publishToPico(0.0f, ctx->base_surge_speed, (float)ctx->target_depth, 0);
+    // }
+
+    while (true) {
+        double current_yaw = ctx->getCurrentYaw();
+        float yaw_cmd = (float)normalizeAngle(target_yaw_ - current_yaw);
+        ctx->publishToPico(yaw_cmd, 1.0f, (float)ctx->target_depth, 0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 
     return BT::NodeStatus::RUNNING;
