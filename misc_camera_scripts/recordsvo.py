@@ -33,7 +33,7 @@ print("[INFO] Camera opened")
 # ==========================
 
 recording_params = sl.RecordingParameters(
-    "slalom_2.svo2",
+    "empty_pool_2.svo2",
     sl.SVO_COMPRESSION_MODE.H264
 )
 

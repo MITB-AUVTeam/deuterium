@@ -17,15 +17,17 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
 
             <!-- 1. INITIALIZE -->
             <!-- NOTE: Change target_depth here (meters, positive-down) for the initial dive -->
-            <DiveToDepth target_depth="0.20"/>
+            <DiveToDepth target_depth="0.90"/>
 
             <!-- 2. GATE MISSION -->
             
             <!-- NOTE: Change 'threshold' here to set how close to get to the gate before passing -->
-            <ApproachObject object="GATE" threshold="0.1"/>
+            <!-- <ApproachObject object="GATE" threshold="60"/> -->
             
             <!-- NOTE: Surge through and clear the gate (Uses frame-counting in C++) -->
-            <DriveThruGate/>
+
+            <ApproachObject object="GATE" threshold="10"/>
+
 
             <!-- 3. POLE MISSION -->
             <!-- <Fallback name="find_pole">
@@ -34,12 +36,22 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
             </Fallback> -->
             
             <!-- NOTE: Change 'threshold' here to set the radius of the orbit approach -->
-            <ApproachObject object="POLE" threshold="2.0"/>
+                        <DiveToDepth target_depth="0.40"/>
+
+            <ApproachObject object="POLE" threshold="200"/>
+
 
             <!-- NOTE: 4-leg square orbit. Pauses 3s at threshold, then X, 2X, 2X, 2X surges.
                  Surge duration X is orbit_surge_duration in mission_params.yaml. -->
             <OrbitPole object="POLE" staystill="3.0"/>
-            
+
+                        <ApproachObject object="POLE" threshold="155"/>
+                                    <ApproachObject object="GATE" threshold="10"/>
+                                                <ApproachObject object="GATE" threshold="60"/>
+
+
+            <DiveToDepth target_depth="-0.10"/>
+
             <!-- 4. RETURN HOME (Reactive) -->
             <!-- <Fallback name="find_gate_home">
                 <IsObjectSeen object="GATE"/>
@@ -47,10 +59,10 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
             </Fallback> -->
 
             <!-- NOTE: Approach home gate to threshold -->
-            <ApproachObject object="GATE" threshold="2.0"/>
+
 
             <!-- NOTE: Clear home gate -->
-            <DriveThruGate/>
+
 
             <!-- 5. SURFACE -->
             <!-- <DiveToDepth target_depth="0.0"/> -->

@@ -198,12 +198,11 @@ BT::NodeStatus Do360Turn::onRunning() {
 void Do360Turn::onHalted() { getCtx(config())->stopMotion(); }
 
 // --- ApproachObject ---------------------------------------------------------
-
 BT::NodeStatus ApproachObject::onStart() {
     auto obj = getInput<std::string>("object");
     auto thr = getInput<double>("threshold");
-    if (!obj || !thr) throw BT::RuntimeError("ApproachObject: missing [object] or [threshold]");
-    target_object_ = obj.value();
+    // if (!obj || !thr) throw BT::RuntimeError("ApproachObject: missing [object] or [threshold]");
+    // target_object_ = obj.value();
     threshold_ = thr.value();
 
     auto ctx = getCtx(config());
@@ -211,9 +210,8 @@ BT::NodeStatus ApproachObject::onStart() {
 
     smoothed_norm_x_ = 0.0f;
     locked_ = false;
-    target_yaw_ = ctx->getCurrentYaw();
-    RCLCPP_INFO(ctx->node->get_logger(),"target lockedW");
-
+    target_yaw_ = 0.0;
+    RCLCPP_INFO(ctx->node->get_logger(),"hahaha %f",target_yaw_);
 
     RCLCPP_INFO(ctx->node->get_logger(), "[ApproachObject] Approaching %s to %.1f m", target_object_.c_str(), threshold_);
     return BT::NodeStatus::RUNNING;
@@ -271,16 +269,27 @@ BT::NodeStatus ApproachObject::onRunning() {
     //     // Object temporarily lost — hold last heading, keep closing distance.
     //     ctx->publishToPico(0.0f, ctx->base_surge_speed, (float)ctx->target_depth, 0);
     // }
-    while (true) {
+    for(int i=0;i<threshold_;i++) {
         rclcpp::spin_some(ctx->node);
         double current_yaw = ctx->getCurrentYaw();
         float yaw_cmd = (float)normalizeAngle(target_yaw_ - current_yaw);
-        ctx->publishToPico(yaw_cmd, 1.0f, (float)ctx->target_depth, 0);
+        ctx->publishToPico(yaw_cmd, 5.0f, (float)ctx->target_depth, 0);
         
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
+    RCLCPP_INFO(ctx->node->get_logger(),"done surge1");
 
-    return BT::NodeStatus::RUNNING;
+    for(int i=0;i<25;i++) {
+        rclcpp::spin_some(ctx->node);
+        double current_yaw = ctx->getCurrentYaw();
+        float yaw_cmd = (float)normalizeAngle(target_yaw_ - current_yaw);
+        ctx->publishToPico(yaw_cmd, 0.0f, (float)ctx->target_depth, 0);
+        
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
+    RCLCPP_INFO(ctx->node->get_logger(),"done stay still");
+
+    return BT::NodeStatus::SUCCESS;
 }
 
 void ApproachObject::onHalted() { getCtx(config())->stopMotion(); }
@@ -291,11 +300,7 @@ BT::NodeStatus DriveThruGate::onStart() {
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
 
-    gate_lost_frames_ = 0;
-    target_yaw_ = ctx->getCurrentYaw();
-
-    RCLCPP_INFO(ctx->node->get_logger(), "[DriveThruGate] Driving through gate.");
-    return BT::NodeStatus::RUNNING;
+    
 }
 
 BT::NodeStatus DriveThruGate::onRunning() {
@@ -379,6 +384,15 @@ BT::NodeStatus OrbitPole::onRunning() {
     if (steps_completed_ >= 4) {
         ctx->stopMotion();
         RCLCPP_INFO(ctx->node->get_logger(), "[OrbitPole] Square orbit complete.");
+        for(int i=0;i<40;i++) {
+        rclcpp::spin_some(ctx->node);
+        double current_yaw = ctx->getCurrentYaw();
+        float yaw_cmd = (float)normalizeAngle(target_yaw_ - current_yaw);
+        ctx->publishToPico(yaw_cmd, 0.0f, (float)ctx->target_depth, 0);
+        
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
+    RCLCPP_INFO(ctx->node->get_logger(),"done stay still");
         return BT::NodeStatus::SUCCESS;
     }
 

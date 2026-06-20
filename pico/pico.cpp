@@ -150,6 +150,15 @@ int main(void) {
                 break;
             }
         }
+        if(state.ref_z < 0) {
+            throttle.VB = 48;
+            throttle.VR = 48;
+            throttle.VL = 48;
+            throttle.HR = 48;
+            throttle.HL = 48;
+            esc::thrust();
+            // return;
+        }
 
         // imu::ask_euler();
         // imu::read_euler();

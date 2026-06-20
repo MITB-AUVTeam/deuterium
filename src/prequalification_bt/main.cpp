@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     ctx->node      = node;
 
     // Declare and Load Parameters (with default values)
-    node->declare_parameter("base_surge_speed", 1.5);
+    node->declare_parameter("base_surge_speed", 5.0);
     node->declare_parameter("base_yaw_speed", 0.1);
     node->declare_parameter("gate_conf_thresh", 0.5);
     node->declare_parameter("pole_conf_thresh", 0.3);
@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     node->declare_parameter("depth_tolerance", 0.15);
     node->declare_parameter("gate_align_deadband", 0.04);
     node->declare_parameter("pole_align_deadband", 0.06);
-    node->declare_parameter("orbit_surge_duration", 4.0);
+    node->declare_parameter("orbit_surge_duration", 8.0);
     node->declare_parameter("orbit_step_angle", 70.0);
 
     auto update_ctx_params = [node, ctx]() {
