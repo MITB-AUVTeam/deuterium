@@ -16,29 +16,36 @@ import os
 from zed_msgs.msg import ObjectsStamped
 from auv_msgs.msg import Detection, DetectionArray
 
-# ── YOLO CLASS MAPPING ────────────────────────────────────────────────
+# ?? YOLO CLASS MAPPING ????????????????????????????????????????????????
 YOLO_CLASS_MAP = {
     0: 'preq_gate',
-    1: 'preq_gate'
+    1: 'preq_pole'
 }
 
-# ── HSV HELPERS (module-level, no self needed) ────────────────────────
-def white_balance(img, strength=0.55):
-    f = img.astype(np.float32)
-    mb, mg, mr = f[:,:,0].mean(), f[:,:,1].mean(), f[:,:,2].mean()
-    k = (mb + mg + mr) / 3.0
-    cor = f.copy()
-    cor[:,:,0] = np.clip(f[:,:,0] * k / (mb + 1e-6), 0, 255)
-    cor[:,:,1] = np.clip(f[:,:,1] * k / (mg + 1e-6), 0, 255)
-    cor[:,:,2] = np.clip(f[:,:,2] * k / (mr + 1e-6), 0, 255)
-    return ((1.0 - strength) * f + strength * cor).astype(np.uint8)
+# ?? YOLO BOUNDING BOX COLOR MAPPING ??????????????????????????????????
+# Use BGR tuples for cv2 rectangle colors.
+YOLO_COLOR_MAP = {
+    'preq_gate': (255, 0, 0),
+    'preq_pole': (0, 255, 0)
+}
+
+# ?? HSV HELPERS (module-level, no self needed) ????????????????????????
+# def white_balance(img, strength=0.55):
+#     f = img.astype(np.float32)
+#     mb, mg, mr = f[:,:,0].mean(), f[:,:,1].mean(), f[:,:,2].mean()
+#     k = (mb + mg + mr) / 3.0
+#     cor = f.copy()
+#     cor[:,:,0] = np.clip(f[:,:,0] * k / (mb + 1e-6), 0, 255)
+#     cor[:,:,1] = np.clip(f[:,:,1] * k / (mg + 1e-6), 0, 255)
+#     cor[:,:,2] = np.clip(f[:,:,2] * k / (mr + 1e-6), 0, 255)
+#     return ((1.0 - strength) * f + strength * cor).astype(np.uint8)
 
 
-def merge_close(mask, px=45):
-    if px <= 0:
-        return mask
-    k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (px*2+1, px*2+1))
-    return cv2.erode(cv2.dilate(mask, k), k)
+# def merge_close(mask, px=45):
+#     if px <= 0:
+#         return mask
+#     k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (px*2+1, px*2+1))
+#     return cv2.erode(cv2.dilate(mask, k), k)
 
 
 class UnifiedDetectionNode(Node):
@@ -84,7 +91,7 @@ class UnifiedDetectionNode(Node):
             [image_sub, depth_sub], queue_size=10, slop=0.05)
         self.ts.registerCallback(self.synced_callback)
 
-        self.get_logger().info('UnifiedDetectionNode started (YOLO + HSV).')
+        self.get_logger().info('UnifiedDetectionNode started (YOLO only).')
 
     def imu_callback(self, msg):
         self.imu_pose = msg.orientation
@@ -92,57 +99,57 @@ class UnifiedDetectionNode(Node):
     def objects_callback(self, msg):
         self.zed_objects = msg.objects
 
-    def get_hsv_bboxes(self, frame_bgr):
+    # def get_hsv_bboxes(self, frame_bgr):
 
-        # ── TUNED HSV SETTINGS ────────────────────────────────────────
-        H_LO        = 160
-        H_HI        = 180
-        S_LO        = 9
-        S_HI        = 255
-        V_LO        = 49
-        V_HI        = 197
-        MIN_AREA    = 10
-        MERGE_PX    = 45
-        WB_STRENGTH = 0.55
+    #     # ?? TUNED HSV SETTINGS ????????????????????????????????????????
+    #     H_LO        = 160
+    #     H_HI        = 180
+    #     S_LO        = 9
+    #     S_HI        = 255
+    #     V_LO        = 49
+    #     V_HI        = 197
+    #     MIN_AREA    = 10
+    #     MERGE_PX    = 45
+    #     WB_STRENGTH = 0.55
 
-        # ── WHITE BALANCE ─────────────────────────────────────────────
-        wb  = white_balance(frame_bgr, WB_STRENGTH)
-        hsv = cv2.cvtColor(wb, cv2.COLOR_BGR2HSV)
+    #     # ?? WHITE BALANCE ?????????????????????????????????????????????
+    #     wb  = white_balance(frame_bgr, WB_STRENGTH)
+    #     hsv = cv2.cvtColor(wb, cv2.COLOR_BGR2HSV)
 
-        # ── HSV MASK (hue wraparound for red) ─────────────────────────
-        if H_LO <= H_HI:
-            mask = cv2.inRange(hsv,
-                               np.array([H_LO, S_LO, V_LO], np.uint8),
-                               np.array([H_HI, S_HI, V_HI], np.uint8))
-        else:
-            m1   = cv2.inRange(hsv,
-                               np.array([H_LO, S_LO, V_LO], np.uint8),
-                               np.array([180,  S_HI, V_HI], np.uint8))
-            m2   = cv2.inRange(hsv,
-                               np.array([0,    S_LO, V_LO], np.uint8),
-                               np.array([H_HI, S_HI, V_HI], np.uint8))
-            mask = cv2.bitwise_or(m1, m2)
+    #     # ?? HSV MASK (hue wraparound for red) ?????????????????????????
+    #     if H_LO <= H_HI:
+    #         mask = cv2.inRange(hsv,
+    #                            np.array([H_LO, S_LO, V_LO], np.uint8),
+    #                            np.array([H_HI, S_HI, V_HI], np.uint8))
+    #     else:
+    #         m1   = cv2.inRange(hsv,
+    #                            np.array([H_LO, S_LO, V_LO], np.uint8),
+    #                            np.array([180,  S_HI, V_HI], np.uint8))
+    #         m2   = cv2.inRange(hsv,
+    #                            np.array([0,    S_LO, V_LO], np.uint8),
+    #                            np.array([H_HI, S_HI, V_HI], np.uint8))
+    #         mask = cv2.bitwise_or(m1, m2)
 
-        # ── MORPHOLOGY ────────────────────────────────────────────────
-        k    = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN,  k)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, k)
+    #     # ?? MORPHOLOGY ????????????????????????????????????????????????
+    #     k    = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    #     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN,  k)
+    #     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, k)
 
-        # ── MERGE CLOSE BLOBS ─────────────────────────────────────────
-        mask = merge_close(mask, MERGE_PX)
+    #     # ?? MERGE CLOSE BLOBS ?????????????????????????????????????????
+    #     mask = merge_close(mask, MERGE_PX)
 
-        # ── CONTOURS ──────────────────────────────────────────────────
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL,
-                                        cv2.CHAIN_APPROX_SIMPLE)
-        valid = [c for c in contours if cv2.contourArea(c) >= MIN_AREA]
+    #     # ?? CONTOURS ??????????????????????????????????????????????????
+    #     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL,
+    #                                     cv2.CHAIN_APPROX_SIMPLE)
+    #     valid = [c for c in contours if cv2.contourArea(c) >= MIN_AREA]
 
-        if not valid:
-            return []
+    #     if not valid:
+    #         return []
 
-        # ── BIGGEST CONTOUR ONLY ──────────────────────────────────────
-        biggest    = max(valid, key=cv2.contourArea)
-        x, y, w, h = cv2.boundingRect(biggest)
-        return [(x, y, x + w, y + h)]
+    #     # ?? BIGGEST CONTOUR ONLY ??????????????????????????????????????
+    #     biggest    = max(valid, key=cv2.contourArea)
+    #     x, y, w, h = cv2.boundingRect(biggest)
+    #     return [(x, y, x + w, y + h)]
 
     def get_depth_from_depthmap(self, depth_np, bbox):
         x1, y1, x2, y2 = map(int, bbox)
@@ -214,21 +221,26 @@ class UnifiedDetectionNode(Node):
 
         current_zed_objects = list(self.zed_objects)
 
-        # ── ZED SDK NATIVE YOLO DETECTIONS ───────────────────────────
+        # ?? ZED SDK NATIVE YOLO DETECTIONS ???????????????????????????
+        best_per_class = {}
         for obj in current_zed_objects:
             if not obj.bounding_box_2d.corners:
                 continue
 
+            cls_id   = obj.label_id
+            cls_name = YOLO_CLASS_MAP.get(cls_id, "unknown_object")
+            conf     = float(obj.confidence) / 100.0
+
+            if cls_name not in best_per_class or conf > best_per_class[cls_name][0]:
+                best_per_class[cls_name] = (conf, obj)
+
+        for cls_name, (conf, obj) in best_per_class.items():
             corners  = obj.bounding_box_2d.corners
             x_coords = [c.kp[0] for c in corners]
             y_coords = [c.kp[1] for c in corners]
             x1, x2   = int(min(x_coords)), int(max(x_coords))
             y1, y2   = int(min(y_coords)), int(max(y_coords))
             bbox     = (x1, y1, x2, y2)
-
-            cls_id   = obj.label_id
-            cls_name = YOLO_CLASS_MAP.get(cls_id, "preq_gate")
-            conf     = float(obj.confidence) / 100.0
 
             pos      = (float(obj.position[1]),
                         float(obj.position[2]),
@@ -244,53 +256,54 @@ class UnifiedDetectionNode(Node):
             det3d_array.detections.append(
                 self.build_det3d(img_msg.header, bbox, cls_name, conf, pos))
 
+            color = YOLO_COLOR_MAP.get(cls_name, (255, 0, 0))
             label = f'{cls_name} {conf:.2f} | {distance:.2f}m'
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
             cv2.putText(frame, label, (x1, max(y1-10, 15)),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
             self.get_logger().info(
                 f'[YOLO] {cls_name} detected at {distance:.2f}m (conf: {conf:.2f})',
                 throttle_duration_sec=2.0)
             tracking_id += 1
 
-        # ── HSV POLE DETECTIONS ───────────────────────────────────────
-        hsv_bboxes = self.get_hsv_bboxes(frame)
-        for bbox in hsv_bboxes:
-            x1, y1, x2, y2 = bbox
-            obj_id = f'hsv_pole_{tracking_id}'
-            current_ids.add(obj_id)
+        # ?? HSV POLE DETECTIONS ???????????????????????????????????????
+        # hsv_bboxes = self.get_hsv_bboxes(frame)
+        # for bbox in hsv_bboxes:
+        #     x1, y1, x2, y2 = bbox
+        #     obj_id = f'hsv_pole_{tracking_id}'
+        #     current_ids.add(obj_id)
 
-            raw_depth = self.get_depth_from_depthmap(depth_np, bbox)
-            raw_depth = raw_depth if raw_depth is not None else 0.0
-            distance  = self.smooth_depth(obj_id, raw_depth)
+        #     raw_depth = self.get_depth_from_depthmap(depth_np, bbox)
+        #     raw_depth = raw_depth if raw_depth is not None else 0.0
+        #     distance  = self.smooth_depth(obj_id, raw_depth)
 
-            pos = (0.0, 0.0, distance)
+        #     pos = (0.0, 0.0, distance)
 
-            det_array.detections.append(
-                self.build_custom_det(img_msg.header, bbox, 'preq_pole',
-                                      0.5, pos, tracking_id))
-            det3d_array.detections.append(
-                self.build_det3d(img_msg.header, bbox, 'preq_pole',
-                                 0.5, pos))
+        #     det_array.detections.append(
+        #         self.build_custom_det(img_msg.header, bbox, 'preq_pole',
+        #                               0.5, pos, tracking_id))
+        #     det3d_array.detections.append(
+        #         self.build_det3d(img_msg.header, bbox, 'preq_pole',
+        #                          0.5, pos))
 
-            label = f'preq_pole | {distance:.2f}m'
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(frame, label, (x1, max(y1-10, 15)),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        #     label = f'preq_pole | {distance:.2f}m'
+        #     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        #     cv2.putText(frame, label, (x1, max(y1-10, 15)),
+        #                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-            tracking_id += 1
+        #     tracking_id += 1
 
         if not det_array.detections:
             self.get_logger().info(
-                'No detections published this frame (YOLO + HSV both)')
+                'No detections published this frame')
 
-        # ── CLEAN UP STALE DEPTH HISTORY ─────────────────────────────
+        # ?? CLEAN UP STALE DEPTH HISTORY ?????????????????????????????
         for old_id in list(self.depth_history.keys()):
             if old_id not in current_ids:
                 del self.depth_history[old_id]
 
-        # ── PUBLISH ───────────────────────────────────────────────────
+        # ?? PUBLISH ???????????????????????????????????????????????????
         try:
             annotated_msg        = self.cv2_bridge.cv2_to_imgmsg(frame, encoding='bgr8')
             annotated_msg.header = img_msg.header

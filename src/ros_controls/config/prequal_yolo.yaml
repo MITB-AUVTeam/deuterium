@@ -1,0 +1,25 @@
+/**:
+  ros__parameters:
+    object_detection:
+      detection_model: 'CUSTOM_YOLOLIKE_BOX_OBJECTS'
+      custom_onnx_file: '/home/cupcake/Desktop/deuterium/src/ros_controls/models/preq_final.onnx'
+      custom_onnx_input_size: 640 
+      
+      custom_class_count: 2 
+
+      class_0:
+        label: 'preq_gate'
+        model_class_id: 0
+        enabled: true
+        confidence_threshold: 50.0
+        is_grounded: false
+        is_static: true
+      
+      class_1:
+        label: 'preq_pole'
+        model_class_id: 0
+        enabled: true
+        confidence_threshold: 50.0
+        is_grounded: false
+        is_static: true
+
