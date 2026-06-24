@@ -15,6 +15,8 @@
 #include <geometry_msgs/msg/twist.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
+#include <rclcpp_action/rclcpp_action.hpp>
+#include "auv_msgs/action/surge.hpp"
 #include <sensor_msgs/msg/imu.hpp>
 #include <std_msgs/msg/float32.hpp>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -63,6 +65,9 @@ struct RobotContext {
   float pole_align_deadband = 0.06f;
   float orbit_surge_duration = 4.0f;
   float orbit_step_angle = 85.0f;
+
+  double locked_yaw = 0.0;
+  bool use_locked_yaw = false;
 
   /**
    * @brief Retrieves the current heading estimated from IMU.
@@ -281,6 +286,49 @@ private:
   std::chrono::steady_clock::time_point stay_still_start_;
 };
 
+class StayStill : public BT::StatefulActionNode {
+public:
+  StayStill(const std::string &name, const BT::NodeConfig &config)
+      : BT::StatefulActionNode(name, config) {}
+  static BT::PortsList providedPorts() {
+    return {BT::InputPort<double>("duration", 3.0,
+                                  "Seconds to hold still")} ;
+  }
+  BT::NodeStatus onStart() override;
+  BT::NodeStatus onRunning() override;
+  void onHalted() override;
+
+private:
+  std::chrono::steady_clock::time_point start_time_;
+  double duration_ = 0.0;
+};
+
+class SurgeForwardDistance : public BT::StatefulActionNode
+{
+public:
+  SurgeForwardDistance(const std::string & name, const BT::NodeConfig & config)
+    : BT::StatefulActionNode(name, config)
+  {}
+
+  static BT::PortsList providedPorts()
+  {
+    return {
+      BT::InputPort<double>("distance", 1.0, "metres to surge forward"),
+    };
+  }
+
+  BT::NodeStatus onStart() override;
+  BT::NodeStatus onRunning() override;
+  void onHalted() override;
+
+private:
+  double target_distance_ = 0.0;
+  rclcpp_action::Client<auv_msgs::action::Surge>::SharedPtr surge_client_ = nullptr;
+  rclcpp_action::ClientGoalHandle<auv_msgs::action::Surge>::SharedPtr goal_handle_ = nullptr;
+  std::shared_future<rclcpp_action::ClientGoalHandle<auv_msgs::action::Surge>::WrappedResult> result_future_;
+  bool action_sent_ = false;
+};
+
 /**
  * @brief Registration helper for the Behavior Tree factory.
  */
@@ -292,4 +340,6 @@ inline void registerAllNodes(BT::BehaviorTreeFactory& factory) {
   factory.registerNodeType<DriveThruGate>("DriveThruGate");
   factory.registerNodeType<ApproachObject>("ApproachObject");
   factory.registerNodeType<OrbitPole>("OrbitPole");
+  factory.registerNodeType<StayStill>("StayStill");
+  factory.registerNodeType<SurgeForwardDistance>("SurgeForwardDistance");
 }

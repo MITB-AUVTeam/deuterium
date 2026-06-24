@@ -294,8 +294,8 @@ void DriveThruGate::onHalted() { getCtx(config())->stopMotion(); }
 BT::NodeStatus OrbitPole::onStart() {
     auto obj = getInput<std::string>("object");
     if (!obj) throw BT::RuntimeError("OrbitPole: missing [object]");
-    target_object_ = obj.value();
-    staystill_ = getInput<double>("staystill").value_or(0.0);
+    target_object_   = obj.value();
+    staystill_       = getInput<double>("staystill").value_or(0.0);
     steps_completed_ = 0;
     turn_target_set_ = false;
 
@@ -305,12 +305,11 @@ BT::NodeStatus OrbitPole::onStart() {
         auto ctx = getCtx(config());
         ctx->stopMotion();
         RCLCPP_INFO(ctx->node->get_logger(),
-            "[OrbitPole] Pausing at threshold for %.1f s.", staystill_);
-    }
-    else {
+                    "[OrbitPole] Pausing at threshold for %.1f s.", staystill_);
+    } else {
         phase_ = Phase::TURN;
         RCLCPP_INFO(getCtx(config())->node->get_logger(),
-            "[OrbitPole] Starting square orbit.");
+                    "[OrbitPole] Starting square orbit.");
     }
     return BT::NodeStatus::RUNNING;
 }
@@ -332,99 +331,212 @@ BT::NodeStatus OrbitPole::onRunning() {
         return BT::NodeStatus::RUNNING;
     }
 
-    // --- All 4 legs complete ---
-    if (steps_completed_ >= 4) {
+    // --- All legs complete ---
+    if (steps_completed_ >= 6) {
         ctx->stopMotion();
-        RCLCPP_INFO(ctx->node->get_logger(), "[OrbitPole] Square orbit complete.");
-        for (int i = 0;i < 40;i++) {
-            rclcpp::spin_some(ctx->node);
-            double current_yaw = ctx->getCurrentYaw();
-            float yaw_cmd = (float)normalizeAngle(target_yaw_ - current_yaw);
-            ctx->publishToPico(yaw_cmd, 0.0f, (float)ctx->target_depth, 0);
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        }
-        RCLCPP_INFO(ctx->node->get_logger(), "done stay still");
+        ctx->locked_yaw = ctx->getCurrentYaw();
+        ctx->use_locked_yaw = true;
+        RCLCPP_INFO(ctx->node->get_logger(), "[OrbitPole] Square orbit complete. Locking yaw for future surges at %.2f rad", ctx->locked_yaw);
         return BT::NodeStatus::SUCCESS;
     }
 
     double cur_yaw = ctx->getCurrentYaw();
 
-    // --- TURN: right 90° for leg 0 (go tangential), left 90° for legs 1-3 ---
+    // --- TURN: right 90° for leg 0, left 90° for legs 1-4, right 90° for leg 5 ---
     if (phase_ == Phase::TURN) {
         if (!turn_target_set_) {
-            double turn_angle = (steps_completed_ == 0) ? -M_PI / 2.0 : M_PI / 2.0;
-
+            double turn_angle = (steps_completed_ == 0 || steps_completed_ == 5) ? -M_PI / 2.0 : M_PI / 2.0;
             target_yaw_ = normalizeAngle(cur_yaw + turn_angle);
-
-            turn_start_ = ctx->node->get_clock()->now().seconds();
-
             turn_target_set_ = true;
         }
 
         double yaw_err = normalizeAngle(target_yaw_ - cur_yaw);
-
-        double turn_elapsed =
-            ctx->node->get_clock()->now().seconds() - turn_start_;
-
-        // Proceed either when aligned or after 5 seconds
-        if (std::abs(yaw_err) < 0.08 || turn_elapsed >= 5.0) {
-
-            phase_ = Phase::SURGE;
-            surge_start_ = ctx->node->get_clock()->now().seconds();
-
-            RCLCPP_INFO(
-                ctx->node->get_logger(),
-                "[OrbitPole] Turn done (err=%.2f rad, t=%.1f s), surging (leg %d/4).",
-                yaw_err,
-                turn_elapsed,
-                steps_completed_ + 1);
+        if (std::abs(yaw_err) < 0.08) {
+            if (steps_completed_ == 5) {
+                steps_completed_++;
+                RCLCPP_INFO(ctx->node->get_logger(), "[OrbitPole] Final realign turn done.");
+            } else {
+                phase_ = Phase::SURGE;
+                surge_start_ = ctx->node->get_clock()->now().seconds();
+                RCLCPP_INFO(ctx->node->get_logger(),
+                            "[OrbitPole] Turn complete, surging (leg %d/5).", steps_completed_ + 1);
+            }
+        } else {
+            ctx->publishToPico((float)yaw_err, 0.0f, (float)ctx->target_depth, 0);
         }
-        else {
-            ctx->publishToPico(
-                (float)yaw_err,
-                0.0f,
-                (float)ctx->target_depth,
-                0);
-        }
-
         return BT::NodeStatus::RUNNING;
     }
 
-    // --- SURGE: X for first leg, 2X for legs 2-4 ---
+    // --- SURGE: X for leg 0 and leg 4, 2X for legs 1-3 ---
     if (phase_ == Phase::SURGE) {
-
-        double duration = (steps_completed_ == 0)
+        double duration = (steps_completed_ == 0 || steps_completed_ == 4)
             ? ctx->orbit_surge_duration
             : ctx->orbit_surge_duration * 2.0;
 
         if (ctx->node->get_clock()->now().seconds() - surge_start_ >= duration) {
-
             steps_completed_++;
             phase_ = Phase::TURN;
             turn_target_set_ = false;
-
             ctx->stopMotion();
-
-            RCLCPP_INFO(
-                ctx->node->get_logger(),
-                "[OrbitPole] Leg %d/4 complete.",
-                steps_completed_);
+            RCLCPP_INFO(ctx->node->get_logger(),
+                        "[OrbitPole] Leg %d/5 complete.", steps_completed_);
+        } else {
+            ctx->publishToPico(0.0f, ctx->base_surge_speed*3, (float)ctx->target_depth, 0);
         }
-        else {
-
-            // Continue correcting heading while moving forward
-            double yaw_err = normalizeAngle(target_yaw_ - cur_yaw);
-
-            ctx->publishToPico(
-                (float)yaw_err,
-                ctx->base_surge_speed,
-                (float)ctx->target_depth,
-                0);
-        }
-
         return BT::NodeStatus::RUNNING;
     }
+
+    return BT::NodeStatus::RUNNING;
+}
+
+// void OrbitPole::onHalted() { getCtx(config())->stopMotion(); }
+
+BT::NodeStatus StayStill::onStart() {
+    auto duration_in = getInput<double>("duration");
+    duration_ = duration_in ? duration_in.value() : duration_;
+    start_time_ = std::chrono::steady_clock::now();
+    getCtx(config())->stopMotion();
+    return BT::NodeStatus::RUNNING;
+}
+
+BT::NodeStatus StayStill::onRunning() {
+    auto ctx = getCtx(config());
+    rclcpp::spin_some(ctx->node);
+
+    if (ctx->use_locked_yaw) {
+        double yaw_err = normalizeAngle(ctx->locked_yaw - ctx->getCurrentYaw());
+        ctx->publishToPico(yaw_err, 0.0f, (float)ctx->target_depth, 0);
+    } else {
+        ctx->stopMotion();
+    }
+    
+    double elapsed = std::chrono::duration<double>(
+        std::chrono::steady_clock::now() - start_time_).count();
+
+    if (elapsed >= duration_) {
+        return BT::NodeStatus::SUCCESS;
+    }
+    return BT::NodeStatus::RUNNING;
+}
+
+void StayStill::onHalted() { getCtx(config())->stopMotion(); }
+
+
+BT::NodeStatus SurgeForwardDistance::onStart()
+{
+    auto distance_in = getInput<double>("distance");
+    if (!distance_in) {
+        throw BT::RuntimeError("SurgeForwardDistance: missing [distance]");
+    }
+    target_distance_ = distance_in.value();
+    if (target_distance_ <= 0.0) {
+        auto ctx = getCtx(config());
+        RCLCPP_ERROR(ctx->node->get_logger(), "[SurgeForwardDistance] distance must be > 0");
+        return BT::NodeStatus::FAILURE;
+    }
+
+    auto ctx = getCtx(config());
+    if (!surge_client_) {
+        surge_client_ = rclcpp_action::create_client<auv_msgs::action::Surge>(
+            ctx->node, "/surge_distance");
+    }
+
+    if (!surge_client_->wait_for_action_server(std::chrono::seconds(2))) {
+        RCLCPP_ERROR(
+            ctx->node->get_logger(),
+            "[SurgeForwardDistance] action server /surge_distance not available");
+        return BT::NodeStatus::FAILURE;
+    }
+
+    auv_msgs::action::Surge::Goal goal;
+    goal.distance = target_distance_;
+
+    auto goal_future = surge_client_->async_send_goal(goal);
+    if (rclcpp::spin_until_future_complete(ctx->node, goal_future, std::chrono::seconds(2)) !=
+        rclcpp::FutureReturnCode::SUCCESS) {
+        RCLCPP_ERROR(
+            ctx->node->get_logger(),
+            "[SurgeForwardDistance] failed to send goal to /surge_distance");
+        return BT::NodeStatus::FAILURE;
+    }
+
+    goal_handle_ = goal_future.get();
+    if (!goal_handle_) {
+        RCLCPP_ERROR(
+            ctx->node->get_logger(),
+            "[SurgeForwardDistance] goal rejected by /surge_distance");
+        return BT::NodeStatus::FAILURE;
+    }
+
+    result_future_ = surge_client_->async_get_result(goal_handle_);
+    action_sent_ = true;
+
+    RCLCPP_INFO(
+        ctx->node->get_logger(),
+        "[SurgeForwardDistance] sent surge goal for %.2f m",
+        target_distance_);
+    return BT::NodeStatus::RUNNING;
+}
+
+BT::NodeStatus SurgeForwardDistance::onRunning()
+{
+    auto ctx = getCtx(config());
+    rclcpp::spin_some(ctx->node);
+
+    if (!action_sent_ || !goal_handle_ || !result_future_.valid()) {
+        RCLCPP_ERROR(
+            ctx->node->get_logger(),
+            "[SurgeForwardDistance] action state invalid while waiting for result");
+        return BT::NodeStatus::FAILURE;
+    }
+
+    if (result_future_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+        return BT::NodeStatus::RUNNING;
+    }
+
+    auto wrapped_result = result_future_.get();
+    action_sent_ = false;
+    goal_handle_.reset();
+
+    if (wrapped_result.code != rclcpp_action::ResultCode::SUCCEEDED) {
+        const auto message = wrapped_result.result
+            ? wrapped_result.result->message
+            : std::string("no result message");
+        RCLCPP_ERROR(
+            ctx->node->get_logger(),
+            "[SurgeForwardDistance] action did not succeed: %s",
+            message.c_str());
+        return BT::NodeStatus::FAILURE;
+    }
+
+    if (!wrapped_result.result || !wrapped_result.result->success) {
+        const auto message = wrapped_result.result
+            ? wrapped_result.result->message
+            : std::string("surge action returned no result");
+        RCLCPP_ERROR(
+            ctx->node->get_logger(),
+            "[SurgeForwardDistance] surge failed: %s",
+            message.c_str());
+        return BT::NodeStatus::FAILURE;
+    }
+
+    RCLCPP_INFO(
+        ctx->node->get_logger(),
+        "[SurgeForwardDistance] surge complete: %s",
+        wrapped_result.result->message.c_str());
+    return BT::NodeStatus::SUCCESS;
+}
+
+void SurgeForwardDistance::onHalted()
+{
+    auto ctx = getCtx(config());
+
+    if (surge_client_ && goal_handle_) {
+        RCLCPP_INFO(ctx->node->get_logger(), "[SurgeForwardDistance] halting, canceling goal");
+        surge_client_->async_cancel_goal(goal_handle_);
+    }
+    action_sent_ = false;
+    goal_handle_.reset();
 }
 
 void OrbitPole::onHalted() { getCtx(config())->stopMotion(); }

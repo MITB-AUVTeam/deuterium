@@ -1,0 +1,10 @@
+# Goal
+float64 distance       # metres to surge forward
+---
+# Result
+bool success
+string message
+---
+# Feedback
+float64 travelled      # metres travelled so far
+float64 remaining      # metres remaining
