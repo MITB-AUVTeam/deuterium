@@ -1,6 +1,0 @@
-# Request
-float64 distance       # metres to surge forward
----
-# Response
-bool success
-string message
