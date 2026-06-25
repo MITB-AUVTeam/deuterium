@@ -25,8 +25,15 @@ def generate_launch_description():
         get_package_share_directory('ros_controls'), 'config', 'down_cam.yaml'
     )
     yolo_config=os.path.join(
-        get_package_share_directory('ros_controls'), 'config', 'custom_yolo.yaml'
+        get_package_share_directory('ros_controls'), 'config', 'main_gate_yolo.yaml'
     )
+
+    ''''
+        yolo_config=os.path.join(
+            get_package_share_directory('ros_controls'), 'config', 'prequal_yolo.yaml'
+        )
+    '''
+    
 
     '''
     print(yolo_config)

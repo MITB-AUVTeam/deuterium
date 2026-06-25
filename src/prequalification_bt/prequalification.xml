@@ -14,17 +14,17 @@ NOTE: If you change this file, you MUST RESTART the Behavior Tree node to reload
 
             <AllSystemsOK name="check_systems" timeout_s="20.0"/>
 
-            <DiveToDepth target_depth="0.20"/>
-
-            <ApproachObject object="GATE" threshold="50" angle="0.0"/>
-            <ApproachObject object="GATE" threshold="20" angle="0.0"/>
-            <ApproachObject object="POLE" threshold="90" angle="0.0"/>
+            <DiveToDepth target_depth="1.0"/>
+            <ApproachObject object="GATE" threshold="80" angle="0.00"/>
+            <ApproachObject object="GATE" threshold="40" angle="0.00"/>
+            <DiveToDepth target_depth="0.40"/>
+            <ApproachObject object="POLE" threshold="140" angle="0.00"/>
 
             <OrbitPole object="POLE" staystill="3.0"/>
 
-            <ApproachObject object="POLE" threshold="90" angle="3.229"/>
-            <ApproachObject object="GATE" threshold="20" angle="3.229"/>
-            <ApproachObject object="GATE" threshold="60" angle="3.229"/>
+            <ApproachObject object="POLE" threshold="100" angle="3.24"/>
+            <DiveToDepth target_depth="0.90"/>
+            <ApproachObject object="GATE" threshold="120" angle="3.24"/>
 
             <DiveToDepth target_depth="-0.10"/>
 

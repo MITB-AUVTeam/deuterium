@@ -16,18 +16,18 @@ sleep 10
 echo "Launching first UART bridge..."
 tmux send-keys -t $SESSION:uart "cd '$SCRIPT_DIR' && source install/setup.bash && ros2 run pico_UART uart_ros_bridge" C-m
 echo "Waiting 10 seconds..."
-sleep 5
+sleep 10
 
 # === SECOND RUN ===
 echo "Second pico flash..."
 tmux send-keys -t $SESSION:pico "$SCRIPT_DIR/program_pico.sh" C-m
 echo "Waiting 10 seconds..."
-sleep 5
+sleep 10
 
 echo "Launching second UART bridge..."
 tmux send-keys -t $SESSION:uart "ros2 run pico_UART uart_ros_bridge" C-m
 echo "Waiting 10 seconds..."
-sleep 5
+sleep 10
 
 # === MAIN STACK ===
 echo "Launching prequal..."

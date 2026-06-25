@@ -17,7 +17,7 @@
       
       class_1:
         label: 'preq_pole'
-        model_class_id: 0
+        model_class_id: 1
         enabled: true
         confidence_threshold: 50.0
         is_grounded: false

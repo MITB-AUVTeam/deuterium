@@ -9,7 +9,7 @@ struct State {
 
     State() {
         roll = pitch = z = 0;
-        ref_z = 0.20;
+        ref_z = 0.01;
         wx = wy = wz = 0;
         dx = dy = dyaw = 0;
     }

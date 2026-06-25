@@ -20,6 +20,9 @@
             min_depth: 0.01 # Min: 0.01, Max: 3.0
             max_depth: 15.0 # Min: 0.5, Max: 20.0
         
+        pos_tracking:
+            pos_tracking_enabled: true
+        
 
         object_detection:
             od_enabled: true
@@ -32,7 +35,7 @@
             custom_onnx_input_size: 640 
             custom_obj_det_config_file: '/home/cupcake/Desktop/deuterium/src/ros_controls/config/prequal_yolo.yaml'
       
-            custom_class_count: 2 
+            custom_class_count: 5 
 
             # class_000:
             #     label: 'preq_gate'

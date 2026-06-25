@@ -34,7 +34,7 @@ prequalification_bt:
     # --- ORBIT SETTINGS ---
     # NOTE: How long the bot surges forward during each of the 8 steps of the orbit octagon.
     # Increase to make a larger circle, decrease to make it tighter.
-    orbit_surge_duration: 4.0
+    orbit_surge_duration: 5.0
 
     # NOTE: The angle to turn during each orbit step (degrees). 
     # 90.0 is a perfect square orbit. 85.0 spirals slightly inward.
