@@ -1,0 +1,19 @@
+<root BTCPP_format="4" main_tree_to_execute="Main_Task">
+
+    <!-- ================= Main Execution Tree ================= -->
+    <BehaviorTree ID="Main_Task">
+        <Sequence>
+            <!-- 0. SYSTEMS CHECK -->
+            <AllSystemsOK name="check_systems" timeout_s="20.0"/>
+            <!-- Call the StartGate subtree (loaded from start_gate.xml) -->
+            <SubTree ID="StartGate" _shared_blackboard="true" />
+            <!-- Call the AlignObject subtree (loaded from alignobject.xml) -->
+            <!-- <SubTree ID="AlignObject" _shared_blackboard="true" /> -->
+            
+            <!-- TESTING SUBTREES (Uncomment one to test individually) -->
+            <!-- <SubTree ID="TestAlign" _shared_blackboard="true" /> -->
+            <!--<SubTree ID="TestSurge" _shared_blackboard="true" /> -->
+        </Sequence>
+    </BehaviorTree>
+
+</root>

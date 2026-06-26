@@ -1,0 +1,68 @@
+<root BTCPP_format="4">
+    <BehaviorTree ID="StartGate">
+        <Sequence name="start_gate_sequence">
+            <DiveToDepth target_depth="0.4"/>
+            <!-- Step 1: Establish Straight Heading -->
+            <Sequence name="establish_heading">
+                <Fallback name="find_gate">
+                    <IsObjectSeen object="main_gate"/>
+                    <Do360Turn success_when_seen="main_gate"/>
+                </Fallback>
+                <CenterObject object="main_gate"/>
+                <SaveCurrentYaw/>
+            </Sequence>
+
+            <!-- Step 2: Find the Picture trial -->
+            <Fallback name="find_objects">
+                <FindAnyObject objects="search_and_rescue,repair_and_survey" found_object="{target_obj}"/>
+                <Do360TurnAny objects="search_and_rescue,repair_and_survey" found_object="{target_obj}"/>
+            </Fallback>
+
+            <!-- Step 3: Approach Picture, Straighten, and Surge -->
+            <AlignWithObject object="{target_obj}"/>
+            <SurgeForwardDistance distance="2.0"/>
+            <AlignToLockedYaw/>
+            <SurgeForwardDistance distance="3.0"/>
+        </Sequence>
+    </BehaviorTree>
+
+    <TreeNodesModel>
+        <Action ID="AllSystemsOK">
+            <input_port name="timeout_s" type="double" default="20.0"/>
+        </Action>
+        <Condition ID="IsObjectSeen">
+            <input_port name="object" type="std::string"/>
+        </Condition>
+        <Condition ID="FindAnyObject">
+            <input_port name="objects" type="std::string"/>
+            <output_port name="found_object" type="std::string"/>
+        </Condition>
+        <Action ID="DiveToDepth">
+            <input_port name="target_depth" type="double"/>
+        </Action>
+        <Action ID="Do360Turn">
+            <input_port name="success_when_seen" type="std::string"/>
+        </Action>
+        <Action ID="Do360TurnAny">
+            <input_port name="objects" type="std::string"/>
+            <output_port name="found_object" type="std::string"/>
+        </Action>
+        <Action ID="CenterObject">
+            <input_port name="object" type="std::string"/>
+        </Action>
+        <Action ID="AlignWithObject">
+            <input_port name="object" type="std::string"/>
+        </Action>
+        <Action ID="AlignAndApproachObject">
+            <input_port name="object" type="std::string"/>
+        </Action>
+        <Action ID="StayStill">
+            <input_port name="duration" type="double" default="3.0"/>
+        </Action>
+        <Action ID="SurgeForwardDistance">
+            <input_port name="distance" type="double" default="1.0"/>
+        </Action>
+        <Action ID="SaveCurrentYaw"/>
+        <Action ID="AlignToLockedYaw"/>
+    </TreeNodesModel>
+</root>

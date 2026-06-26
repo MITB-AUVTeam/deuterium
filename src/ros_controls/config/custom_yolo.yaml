@@ -2,7 +2,7 @@
   ros__parameters:
     object_detection:
       detection_model: 'CUSTOM_YOLOLIKE_BOX_OBJECTS'
-      custom_onnx_file: '/home/cupcake/Desktop/deuterium/src/ros_controls/models/new_model_prequal.onnx'
+      custom_onnx_file: '/home/cupcake/Desktop/main-tasks/src/ros_controls/models/new_model_prequal.onnx'
       custom_onnx_input_size: 1280 
       
       custom_class_count: 1 

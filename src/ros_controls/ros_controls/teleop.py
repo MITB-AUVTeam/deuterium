@@ -22,7 +22,7 @@ class TeleopNode(Node):
 
         self.current_depth  = 0.0
         self.target_depth   = 0.0
-        self.current_yaw    = 0.0
+        #self.current_yaw    = 0.0
         self.odom_received  = False
 
         self.depth_step    = 0.1    # metres per keypress
@@ -118,10 +118,10 @@ X            : Exit
                         node.delta_distance -= node.distance_step
                         print(f"  Target distance : {node.delta_distance:.2f} m")
                     elif ch == 'a':
-                        node.delta_theta -=node.yaw_step
+                        node.delta_theta += node.yaw_step
                         print(f"  Turning left : {node.delta_theta:.2f} radians")
                     elif ch == 'd':
-                        node.delta_theta += node.yaw_step
+                        node.delta_theta -= node.yaw_step
                         print(f"  Turning right : {node.delta_theta:.2f} radians")
                     elif ch== 'o':
                         node.delta_distance=0

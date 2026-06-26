@@ -5,7 +5,7 @@ import cv2
 # INIT ZED
 # ==========================
 
-zed = sl.Camera()
+zed = sl.Camera(1)
 
 init_params = sl.InitParameters()
 

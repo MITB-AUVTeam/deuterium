@@ -35,12 +35,10 @@ setup(
     entry_points={
         'console_scripts': [
             'teleop =ros_controls.teleop:main',
+            'surge_service=ros_controls.surge_service:main',
             'combined_detections=ros_controls.combined_detections:main',
-            'combined_detections_hsv_pose=ros_controls.combined_detection_hsv_pose:main',
-            'dataset_collector_front =ros_controls.dataset_collector_front:main',
-            'dataset_collector_down =ros_controls.dataset_collector_down:main',
-            'hsv_tuned_detections=ros_controls.hsv_tuned_detections',
-            'combined_detections_v2=ros_controls.combined_detections_v2',
+            'dataset_collector_front=ros_controls.dataset_collector_front:main',
+            'dataset_collector_down=ros_controls.dataset_collector_down:main',
         ],
     },
 )

@@ -8,6 +8,8 @@
 
             camera_name: 'zed2i_front'
             optional_opencv_calibration_file: "/home/cupcake/Downloads/new_calib_front.yaml"
+            #optional_opencv_calibration_file: "/home/cupcake/Desktop/main-tasks/src/ros_controls/config/front_cam_calib_v2.yaml"
+
 
         video:
             brightness: 4 # [DYNAMIC] Image brightness. Range: 0-8
@@ -18,24 +20,36 @@
             min_depth: 0.01 # Min: 0.01, Max: 3.0
             max_depth: 15.0 # Min: 0.5, Max: 20.0
         
+        pos_tracking:
+            pos_tracking_enabled: true
+        
 
         object_detection:
             od_enabled: true
             detection_model: 'CUSTOM_YOLOLIKE_BOX_OBJECTS'
-            custom_onnx_file: '/home/cupcake/Desktop/deuterium/src/ros_controls/models/new_model_prequal.onnx'
+            #custom_onnx_file: '/home/cupcake/Desktop/main-tasks/src/ros_controls/models/new_model_prequal.onnx'
+            custom_onnx_file: '/home/cupcake/Desktop/main-tasks/src/ros_controls/models/main_gate_negative.onnx'
             confidence_threshold: 50.0
             max_range: 15.0
 
-            custom_onnx_input_size: 1280 
-            custom_obj_det_config_file: '/home/cupcake/Desktop/deuterium/src/ros_controls/config/custom_yolo.yaml'
+            custom_onnx_input_size: 640 
+            custom_obj_det_config_file: '/home/cupcake/Desktop/main-tasks/src/ros_controls/config/main_gate_yolo.yaml'
       
-            custom_class_count: 1 
+            custom_class_count: 5 
 
-            class_000:
-                label: 'gate'
-                model_class_id: 0
-                enabled: true
-                confidence_threshold: 50.0
-                is_grounded: false
-                is_static: true
+            # class_000:
+            #     label: 'preq_gate'
+            #     model_class_id: 0
+            #     enabled: true
+            #     confidence_threshold: 50.0
+            #     is_grounded: false
+            #     is_static: true
+            
+            # class_1:
+            #     label: 'preq_pole'
+            #     model_class_id: 0
+            #     enabled: true
+            #     confidence_threshold: 50.0
+            #     is_grounded: false
+            #     is_static: true
 

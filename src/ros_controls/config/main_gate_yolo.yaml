@@ -1,0 +1,48 @@
+/**:
+  ros__parameters:
+    object_detection:
+      detection_model: 'CUSTOM_YOLOLIKE_BOX_OBJECTS'
+      custom_onnx_file: '/home/cupcake/Desktop/main-tasks/src/ros_controls/models/main_gate_negative.onnx'
+      custom_onnx_input_size: 640 
+      
+      custom_class_count: 5 
+
+      class_0:
+        label: 'search_and_rescue'
+        model_class_id: 0
+        enabled: true
+        confidence_threshold: 50.0
+        is_grounded: false
+        is_static: true
+      
+      class_1:
+        label: 'red_pole'
+        model_class_id: 1
+        enabled: true
+        confidence_threshold: 50.0
+        is_grounded: false
+        is_static: true
+
+      class_2:
+        label: 'repair_and_survey'
+        model_class_id: 2
+        enabled: true
+        confidence_threshold: 50.0
+        is_grounded: false
+        is_static: true 
+      
+      class_3:
+        label: 'white_pole'
+        model_class_id: 3
+        enabled: true
+        confidence_threshold: 50.0
+        is_grounded: false
+        is_static: true
+      
+      class_4:
+        label: 'main_gate'
+        model_class_id: 4
+        enabled: true
+        confidence_threshold: 30.0
+        is_grounded: false
+        is_static: true

@@ -112,9 +112,9 @@ int main(void) {
         if (esc_flag) {
             esc_flag = false;
             uint32_t control_count = timer_count;
-            throttle.VB = 48;
-            throttle.VR = 48;
-            throttle.VL = 48;
+            // throttle.VB = 48;
+            // throttle.VR = 48;
+            // throttle.VL = 48;
             // throttle.HR = 48;
             // throttle.HL = 300;
 

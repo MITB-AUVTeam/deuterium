@@ -1,0 +1,23 @@
+<root BTCPP_format="4">
+    <!-- ================= AlignObject Subtree Definition ================= -->
+    <BehaviorTree ID="AlignObject">
+        <Sequence name="align_object_sequence">
+            <Fallback name="find_pole">
+                <IsObjectSeen object="search_and_rescue"/>
+                <Do360Turn success_when_seen="search_and_rescue"/>
+            </Fallback>
+            <AlignAndApproachObject object="search_and_rescue"/>
+        </Sequence>
+    </BehaviorTree>
+    <TreeNodesModel>
+        <Condition ID="IsObjectSeen">
+            <input_port name="object" type="std::string">GATE or POLE or prequal_pole</input_port>
+        </Condition>
+        <Action ID="Do360Turn">
+            <input_port name="success_when_seen" type="std::string">Stop when object is seen</input_port>
+        </Action>
+        <Action ID="AlignAndApproachObject">
+            <input_port name="object" type="std::string">Object to align and approach</input_port>
+        </Action>
+    </TreeNodesModel>
+</root>
