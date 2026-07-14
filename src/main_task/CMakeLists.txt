@@ -15,7 +15,6 @@ find_package(auv_msgs         REQUIRED)
 find_package(tf2              REQUIRED)
 find_package(ament_index_cpp  REQUIRED)
 find_package(diagnostic_msgs   REQUIRED)
-find_package(rclcpp_action    REQUIRED)
 
 # ── BehaviorTree.CPP ──────────────────────────────────────────────────────────
 find_package(behaviortree_cpp REQUIRED)
@@ -40,7 +39,6 @@ ament_target_dependencies(main_task_node
     tf2
     ament_index_cpp
     diagnostic_msgs
-    rclcpp_action
 )
 
 target_link_libraries(main_task_node

@@ -4,45 +4,22 @@
     <BehaviorTree ID="Main_Task">
         <Sequence>
             <SubTree ID="StartGate" _shared_blackboard="true"/>
-            <!-- <SubTree ID="AlignObject" _shared_blackboard="true"/> -->
         </Sequence>
     </BehaviorTree>
 
     <!-- ================= Start Gate ================= -->
+    <!-- Change the gate target object in ONE place: the Script node below. -->
     <BehaviorTree ID="StartGate">
         <Sequence name="start_gate_sequence">
+            <Script code=" target := 'search_and_rescue' "/>
             <AllSystemsOK name="check_systems" timeout_s="20.0"/>
             <DiveToDepth target_depth="0.4"/>
-            <Do360Turn success_when_seen="search_and_rescue" max_turns="2"/>
+            <Do360Turn success_when_seen="{target}" max_turns="2"/>
             <Fallback name="find_search_rescue">
-                <IsObjectSeen object="search_and_rescue"/>
-                <Do360Turn success_when_seen="search_and_rescue" max_turns="2"/>
+                <IsObjectSeen object="{target}"/>
+                <Do360Turn success_when_seen="{target}" max_turns="2"/>
             </Fallback>
-            <AlignAndApproachObject object="search_and_rescue"/>
-        </Sequence>
-    </BehaviorTree>
-
-    <!-- ================= Align Object ================= -->
-    <BehaviorTree ID="AlignObject">
-        <Sequence name="align_object_sequence">
-            <Fallback name="find_pole">
-                <IsObjectSeen object="search_and_rescue"/>
-                <Do360Turn success_when_seen="search_and_rescue"/>
-            </Fallback>
-            <AlignAndApproachObject object="search_and_rescue"/>
-        </Sequence>
-    </BehaviorTree>
-
-    <!-- ================= Test Trees ================= -->
-    <BehaviorTree ID="TestAlign">
-        <Sequence name="test_align_sequence">
-            <AlignWithObject object="main_gate"/>
-        </Sequence>
-    </BehaviorTree>
-
-    <BehaviorTree ID="TestSurge">
-        <Sequence name="test_surge_sequence">
-            <SurgeForwardDistance distance="2.0"/>
+            <AlignAndApproachObject object="{target}"/>
         </Sequence>
     </BehaviorTree>
 
@@ -54,10 +31,6 @@
         <Condition ID="IsObjectSeen">
             <input_port name="object" type="std::string"/>
         </Condition>
-        <Condition ID="FindAnyObject">
-            <input_port name="objects" type="std::string"/>
-            <output_port name="found_object" type="std::string"/>
-        </Condition>
         <Action ID="DiveToDepth">
             <input_port name="target_depth" type="double"/>
         </Action>
@@ -65,27 +38,9 @@
             <input_port name="success_when_seen" type="std::string"/>
             <input_port name="max_turns" type="int" default="2"/>
         </Action>
-        <Action ID="Do360TurnAny">
-            <input_port name="objects" type="std::string"/>
-            <output_port name="found_object" type="std::string"/>
-        </Action>
-        <Action ID="CenterObject">
-            <input_port name="object" type="std::string"/>
-        </Action>
-        <Action ID="AlignWithObject">
-            <input_port name="object" type="std::string"/>
-        </Action>
         <Action ID="AlignAndApproachObject">
             <input_port name="object" type="std::string"/>
         </Action>
-        <Action ID="StayStill">
-            <input_port name="duration" type="double" default="3.0"/>
-        </Action>
-        <Action ID="SurgeForwardDistance">
-            <input_port name="distance" type="double" default="1.0"/>
-        </Action>
-        <Action ID="SaveCurrentYaw"/>
-        <Action ID="AlignToLockedYaw"/>
     </TreeNodesModel>
 
 </root>

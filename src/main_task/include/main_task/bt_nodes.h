@@ -13,8 +13,6 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <vision_msgs/msg/detection3_d_array.hpp>
-#include <rclcpp_action/rclcpp_action.hpp>
-#include "auv_msgs/action/surge.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -56,9 +54,6 @@ struct RobotContext {
     float camera_alpha = 0.25f;
     int align_confirm_frames = 5;
     int gate_lost_timeout_frames = 30;
-
-    double locked_yaw = 0.0;
-    bool use_locked_yaw = false;
 
     double getCurrentYaw() {
         std::lock_guard<std::mutex> g(mtx);
@@ -230,74 +225,6 @@ private:
     bool object_found_ = false;
 };
 
-class CenterObject : public BT::StatefulActionNode {
-public:
-    CenterObject(const std::string &name, const BT::NodeConfig &config)
-            : BT::StatefulActionNode(name, config) {}
-    static BT::PortsList providedPorts() {
-        return {BT::InputPort<std::string>("object")};
-    }
-    BT::NodeStatus onStart() override;
-    BT::NodeStatus onRunning() override;
-    void onHalted() override;
-
-private:
-    std::string target_object_;
-    int align_confirm_frames_ = 0;
-    double filtered_yaw_err_ = 0.0;
-    bool is_holding_ = false;
-    std::chrono::steady_clock::time_point hold_start_time_;
-};
-
-class FindAnyObject : public BT::ConditionNode {
-public:
-    FindAnyObject(const std::string &name, const BT::NodeConfig &config)
-            : BT::ConditionNode(name, config) {}
-    static BT::PortsList providedPorts() {
-        return {BT::InputPort<std::string>("objects"),
-                BT::OutputPort<std::string>("found_object")};
-    }
-    BT::NodeStatus tick() override;
-};
-
-class Do360TurnAny : public BT::StatefulActionNode {
-public:
-    Do360TurnAny(const std::string &name, const BT::NodeConfig &config)
-            : BT::StatefulActionNode(name, config) {}
-    static BT::PortsList providedPorts() {
-        return {BT::InputPort<std::string>("objects"),
-                BT::OutputPort<std::string>("found_object")};
-    }
-    BT::NodeStatus onStart() override;
-    BT::NodeStatus onRunning() override;
-    void onHalted() override;
-
-private:
-    std::vector<std::string> targets_;
-    double prev_yaw_ = 0.0;
-    double accumulated_yaw_ = 0.0;
-    int confirm_frames_ = 0;
-    std::string found_target_;
-};
-
-class AlignWithObject : public BT::StatefulActionNode {
-public:
-    AlignWithObject(const std::string &name, const BT::NodeConfig &config)
-        : BT::StatefulActionNode(name, config) {}
-    static BT::PortsList providedPorts() {
-        return {BT::InputPort<std::string>("object")};
-    }
-    BT::NodeStatus onStart() override;
-    BT::NodeStatus onRunning() override;
-    void onHalted() override;
-
-private:
-    std::string target_object_;
-    int align_confirm_frames_ = 0;
-    int gate_lost_frames_ = 0;
-    double filtered_yaw_err_ = 0.0;
-};
-
 class AlignAndApproachObject : public BT::StatefulActionNode {
 public:
     AlignAndApproachObject(const std::string &name, const BT::NodeConfig &config)
@@ -311,63 +238,8 @@ public:
 
 private:
     std::string target_object_;
-};
-
-class StayStill : public BT::StatefulActionNode {
-public:
-    StayStill(const std::string &name, const BT::NodeConfig &config)
-        : BT::StatefulActionNode(name, config) {}
-    static BT::PortsList providedPorts() {
-        return {BT::InputPort<double>("duration", 3.0,
-                                      "Seconds to hold still")};
-    }
-    BT::NodeStatus onStart() override;
-    BT::NodeStatus onRunning() override;
-    void onHalted() override;
-
-private:
-    std::chrono::steady_clock::time_point start_time_;
-    double duration_ = 0.0;
-};
-
-class SurgeForwardDistance : public BT::StatefulActionNode {
-public:
-    SurgeForwardDistance(const std::string & name, const BT::NodeConfig & config)
-        : BT::StatefulActionNode(name, config) {}
-    static BT::PortsList providedPorts() {
-        return {BT::InputPort<double>("distance", 1.0, "metres to surge forward")};
-    }
-    BT::NodeStatus onStart() override;
-    BT::NodeStatus onRunning() override;
-    void onHalted() override;
-
-private:
-    double target_distance_ = 0.0;
-    rclcpp_action::Client<auv_msgs::action::Surge>::SharedPtr surge_client_ = nullptr;
-    rclcpp_action::ClientGoalHandle<auv_msgs::action::Surge>::SharedPtr goal_handle_ = nullptr;
-    std::shared_future<rclcpp_action::ClientGoalHandle<auv_msgs::action::Surge>::WrappedResult> result_future_;
-    bool action_sent_ = false;
-};
-
-class SaveCurrentYaw : public BT::SyncActionNode {
-public:
-    SaveCurrentYaw(const std::string &name, const BT::NodeConfig &config)
-        : BT::SyncActionNode(name, config) {}
-    static BT::PortsList providedPorts() { return {}; }
-    BT::NodeStatus tick() override;
-};
-
-class AlignToLockedYaw : public BT::StatefulActionNode {
-public:
-    AlignToLockedYaw(const std::string &name, const BT::NodeConfig &config)
-        : BT::StatefulActionNode(name, config) {}
-    static BT::PortsList providedPorts() { return {}; }
-    BT::NodeStatus onStart() override;
-    BT::NodeStatus onRunning() override;
-    void onHalted() override;
-
-private:
-    int align_confirm_frames_ = 0;
+    int lost_frames_ = 0;
+    bool has_seen_ = false;
 };
 
 inline void registerAllNodes(BT::BehaviorTreeFactory &factory) {
@@ -375,13 +247,5 @@ inline void registerAllNodes(BT::BehaviorTreeFactory &factory) {
     factory.registerNodeType<DiveToDepth>("DiveToDepth");
     factory.registerNodeType<IsObjectSeen>("IsObjectSeen");
     factory.registerNodeType<Do360Turn>("Do360Turn");
-    factory.registerNodeType<CenterObject>("CenterObject");
-    factory.registerNodeType<FindAnyObject>("FindAnyObject");
-    factory.registerNodeType<Do360TurnAny>("Do360TurnAny");
-    factory.registerNodeType<AlignWithObject>("AlignWithObject");
     factory.registerNodeType<AlignAndApproachObject>("AlignAndApproachObject");
-    factory.registerNodeType<StayStill>("StayStill");
-    factory.registerNodeType<SurgeForwardDistance>("SurgeForwardDistance");
-    factory.registerNodeType<SaveCurrentYaw>("SaveCurrentYaw");
-    factory.registerNodeType<AlignToLockedYaw>("AlignToLockedYaw");
 }
