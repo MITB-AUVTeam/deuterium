@@ -1,0 +1,4 @@
+float32 delta_theta
+float32 delta_distance
+float32 target_depth
+uint8 stop_thrusters

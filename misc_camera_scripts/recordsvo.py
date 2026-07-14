@@ -5,7 +5,7 @@ import cv2
 # INIT ZED
 # ==========================
 
-zed = sl.Camera()
+zed = sl.Camera(1)
 
 init_params = sl.InitParameters()
 
@@ -33,7 +33,7 @@ print("[INFO] Camera opened")
 # ==========================
 
 recording_params = sl.RecordingParameters(
-    "underwater_custom.svo2",
+    "empty_pool_2.svo2",
     sl.SVO_COMPRESSION_MODE.H264
 )
 

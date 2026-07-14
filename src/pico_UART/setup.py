@@ -24,9 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'uart_bridge=pico_UART.uart_to_ros:main',
-            'uart_ros_bridge_2=pico_UART.uart_ros_bridge_2:main',
-            'uart_ros_bridge_3=pico_UART.uart_ros_bridge_3:main',
+            'uart_ros_bridge=pico_UART.uart_ros_bridge:main',
         ],
     },
 )

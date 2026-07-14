@@ -1,0 +1,14 @@
+main_task_node:
+  ros__parameters:
+    base_surge_speed: 0.8
+    base_yaw_speed: 0.1
+    gate_conf_thresh: 0.60
+    pole_conf_thresh: 0.30
+    depth_tolerance: 0.15
+    pole_approach_threshold: 1.0
+    gate_staystill_time: 3.0
+    align_obj_threshold: 0.04
+    align_yaw_threshold: 0.10
+    camera_alpha: 0.25
+    align_confirm_frames: 5
+    gate_lost_timeout_frames: 30

@@ -1,0 +1,31 @@
+# config/zed2i.yaml
+# Parameters for Stereolabs zed2i camera
+
+---
+/**:
+    ros__parameters:
+        general:
+          
+            camera_name: 'zed2i_down'
+            optional_opencv_callibration_file: "/home/cupcake/Downloads/zed_calib_down.yaml"
+
+        video:
+            brightness: 4 # [DYNAMIC] Image brightness. Range: 0-8
+            contrast: 4 # [DYNAMIC] Image contrast. Range: 0-8
+            hue: 0 # [DYNAMIC] Image hue. Range: 0 to 11
+
+        depth:
+            depth_mode: 'PERFORMANCE'
+            min_depth: 0.01 # Min: 0.01, Max: 3.0
+            max_depth: 15.0 # Min: 0.5, Max: 20.0
+
+       
+        object_detection:
+            od_enabled: true
+            detection_model: 'CUSTOM_YOLOLIKE_BOX_OBJECTS'
+            custom_onnx_file: '/home/cupcake/Desktop/main-tasks/src/ros_controls/models/main_gate_negative.onnx'
+            confidence_threshold: 50.0
+            max_range: 15.0
+		
+            custom_onnx_input_size: 640
+            custom_obj_det_config_file: '/home/cupcake/Desktop/main-tasks/src/ros_controls/config/main_gate_yolo.yaml'

@@ -92,7 +92,7 @@ int main(void) {
     gpio_set_dir(DEBUG_PIN, GPIO_OUT);
     gpio_put(DEBUG_PIN, 0);
 
-    imu::init();
+    // imu::init();
     presens::init();
 
     multicore_launch_core1(core1_entry);
@@ -112,20 +112,26 @@ int main(void) {
         if (esc_flag) {
             esc_flag = false;
             uint32_t control_count = timer_count;
+            // throttle.VB = 300;
+            // throttle.VR = 300;
+            // throttle.VL = 300;
+            // throttle.HR = 300;
+            // throttle.HL = 300;
+
             esc::thrust();
 
             switch (control_count) {
             case 1:
-                imu::ask_euler();
+                // imu::ask_euler();
                 break;
             case 3:
-                imu::read_euler();
+                // imu::read_euler();
                 break;
             case 4:
-                imu::ask_gyro();
+                // imu::ask_gyro();
                 break;
             case 5:
-                imu::read_gyro();
+                // imu::read_gyro();
                 break;
             case 6:
                 presens::ask_D1_5();
@@ -143,6 +149,15 @@ int main(void) {
             default:
                 break;
             }
+        }
+        if(state.ref_z < 0) {
+            throttle.VB = 48;
+            throttle.VR = 48;
+            throttle.VL = 48;
+            throttle.HR = 48;
+            throttle.HL = 48;
+            esc::thrust();
+            // return;
         }
 
         // imu::ask_euler();

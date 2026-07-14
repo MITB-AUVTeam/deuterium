@@ -1,0 +1,46 @@
+<root BTCPP_format="4" main_tree_to_execute="Main_Task">
+
+    <!-- ================= Main Execution Tree ================= -->
+    <BehaviorTree ID="Main_Task">
+        <Sequence>
+            <SubTree ID="StartGate" _shared_blackboard="true"/>
+        </Sequence>
+    </BehaviorTree>
+
+    <!-- ================= Start Gate ================= -->
+    <!-- Change the gate target object in ONE place: the Script node below. -->
+    <BehaviorTree ID="StartGate">
+        <Sequence name="start_gate_sequence">
+            <Script code=" target := 'search_and_rescue' "/>
+            <AllSystemsOK name="check_systems" timeout_s="20.0"/>
+            <DiveToDepth target_depth="0.4"/>
+            <Do360Turn success_when_seen="{target}" max_turns="2"/>
+            <Fallback name="find_search_rescue">
+                <IsObjectSeen object="{target}"/>
+                <Do360Turn success_when_seen="{target}" max_turns="2"/>
+            </Fallback>
+            <AlignAndApproachObject object="{target}"/>
+        </Sequence>
+    </BehaviorTree>
+
+    <!-- ================= Node Declarations ================= -->
+    <TreeNodesModel>
+        <Action ID="AllSystemsOK">
+            <input_port name="timeout_s" type="double" default="20.0"/>
+        </Action>
+        <Condition ID="IsObjectSeen">
+            <input_port name="object" type="std::string"/>
+        </Condition>
+        <Action ID="DiveToDepth">
+            <input_port name="target_depth" type="double"/>
+        </Action>
+        <Action ID="Do360Turn">
+            <input_port name="success_when_seen" type="std::string"/>
+            <input_port name="max_turns" type="int" default="2"/>
+        </Action>
+        <Action ID="AlignAndApproachObject">
+            <input_port name="object" type="std::string"/>
+        </Action>
+    </TreeNodesModel>
+
+</root>
