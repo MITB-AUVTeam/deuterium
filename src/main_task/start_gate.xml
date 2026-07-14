@@ -5,17 +5,17 @@
             <!-- Step 1: Establish Straight Heading -->
             <Sequence name="establish_heading">
                 <Fallback name="find_gate">
-                    <IsObjectSeen object="shark"/>
-                    <Do360Turn success_when_seen="shark"/>
+                    <IsObjectSeen object="Search_Rescue"/>
+                    <Do360Turn success_when_seen="Search_Rescue"/>
                 </Fallback>
-                <CenterObject object="shark"/>
+                <CenterObject object="Search_Rescue"/>
                 <SaveCurrentYaw/>
             </Sequence>
 
             <!-- Step 2: Find the Picture trial -->
             <Fallback name="find_objects">
-                <FindAnyObject objects="shark,sawfish" found_object="{target_obj}"/>
-                <Do360TurnAny objects="shark,sawfish" found_object="{target_obj}"/>
+                <FindAnyObject objects="Search_Rescue,Survey_Repair" found_object="{target_obj}"/>
+                <Do360TurnAny objects="Search_Rescue,Survey_Repair" found_object="{target_obj}"/>
             </Fallback>
 
             <!-- Step 3: Approach Picture, Straighten, and Surge -->
