@@ -54,11 +54,3 @@
         confidence_threshold: 50.0
         is_grounded: false
         is_static: true
-        
-      class_5:
-        label: 'return_home'
-        model_class_id: 5
-        enabled: true
-        confidence_threshold: 30.0
-        is_grounded: false
-        is_static: true
