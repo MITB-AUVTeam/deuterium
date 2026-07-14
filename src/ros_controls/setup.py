@@ -40,6 +40,7 @@ setup(
             'dataset_collector_front=ros_controls.dataset_collector_front:main',
             'dataset_collector_down=ros_controls.dataset_collector_down:main',
             'imu_yaw_error=ros_controls.imu_yaw_error:main',
+            'gamepad_teleop=ros_controls.gamepad_teleop:main'
         ],
     },
 )
