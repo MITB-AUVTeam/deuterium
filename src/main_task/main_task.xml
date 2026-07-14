@@ -11,7 +11,7 @@
     <!-- Change the gate target object in ONE place: the Script node below. -->
     <BehaviorTree ID="StartGate">
         <Sequence name="start_gate_sequence">
-            <Script code=" target := 'search_and_rescue' "/>
+            <Script code=" target := 'Search_Rescue' "/>
             <AllSystemsOK name="check_systems" timeout_s="20.0"/>
             <DiveToDepth target_depth="0.4"/>
             <Do360Turn success_when_seen="{target}" max_turns="2"/>
