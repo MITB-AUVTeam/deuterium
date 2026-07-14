@@ -116,14 +116,19 @@ BT::NodeStatus Do360Turn::onStart() {
     if (!obj) throw BT::RuntimeError("Do360Turn: missing [success_when_seen]");
     target_object_ = obj.value();
 
+    auto turns_in = getInput<int>("max_turns");
+    max_turns_ = turns_in ? turns_in.value() : 2;
+
     auto ctx = getCtx(config());
     rclcpp::spin_some(ctx->node);
 
-    prev_yaw_       = ctx->getCurrentYaw();
+    prev_yaw_        = ctx->getCurrentYaw();
     accumulated_yaw_ = 0.0;
     confirm_frames_  = 0;
+    object_found_    = false;
 
-    RCLCPP_INFO(ctx->node->get_logger(), "[Do360Turn] Searching for %s...", target_object_.c_str());
+    RCLCPP_INFO(ctx->node->get_logger(), "[Do360Turn] Scanning for %s (max %d turns)...",
+                target_object_.c_str(), max_turns_);
     ctx->publishToPico(ctx->base_yaw_speed, 0.0f, (float)ctx->target_depth, 0);
     return BT::NodeStatus::RUNNING;
 }
@@ -142,7 +147,9 @@ BT::NodeStatus Do360Turn::onRunning() {
 
         if (confirm_frames_ >= 4) {
             ctx->stopMotion();
-            RCLCPP_INFO(ctx->node->get_logger(), "[Do360Turn] %s confirmed (%d frames).", target_object_.c_str(), confirm_frames_);
+            object_found_ = true;
+            RCLCPP_INFO(ctx->node->get_logger(), "[Do360Turn] %s confirmed (%d frames). Stopping early.",
+                        target_object_.c_str(), confirm_frames_);
             return BT::NodeStatus::SUCCESS;
         }
 
@@ -150,7 +157,8 @@ BT::NodeStatus Do360Turn::onRunning() {
     }
 
     if (confirm_frames_ > 0) {
-        RCLCPP_WARN(ctx->node->get_logger(), "[Do360Turn] %s lost after %d confirm frames, resuming spin.", target_object_.c_str(), confirm_frames_);
+        RCLCPP_WARN(ctx->node->get_logger(), "[Do360Turn] %s lost after %d confirm frames, resuming spin.",
+                    target_object_.c_str(), confirm_frames_);
         confirm_frames_ = 0;
     }
 
@@ -158,18 +166,19 @@ BT::NodeStatus Do360Turn::onRunning() {
     accumulated_yaw_ += std::abs(normalizeAngle(current_yaw - prev_yaw_));
     prev_yaw_ = current_yaw;
 
-    if (accumulated_yaw_ >= (2.0 * M_PI)) {
+    if (accumulated_yaw_ >= (max_turns_ * 2.0 * M_PI)) {
         ctx->stopMotion();
-        RCLCPP_WARN(ctx->node->get_logger(), "[Do360Turn] Full rotation complete. %s not found.", target_object_.c_str());
-        return BT::NodeStatus::FAILURE;
+        RCLCPP_WARN(ctx->node->get_logger(), "[Do360Turn] %d full rotations complete. %s not found. Returning SUCCESS anyway.",
+                    max_turns_, target_object_.c_str());
+        return BT::NodeStatus::SUCCESS;
     }
 
     ctx->publishToPico(ctx->base_yaw_speed, 0.0f, (float)ctx->target_depth, 0);
     return BT::NodeStatus::RUNNING;
 }
 
-void Do360Turn::onHalted() { 
-    getCtx(config())->stopMotion(); 
+void Do360Turn::onHalted() {
+    getCtx(config())->stopMotion();
 }
 
 // --- AlignWithObject -----------------------------------------------------------

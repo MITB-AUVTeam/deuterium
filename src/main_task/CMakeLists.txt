@@ -52,12 +52,8 @@ install(TARGETS main_task_node
     DESTINATION lib/${PROJECT_NAME}
 )
 
-install(FILES 
+install(FILES
     main_task.xml
-    start_gate.xml
-    src/alignobject.xml
-    test_align.xml
-    test_surge.xml
     DESTINATION share/${PROJECT_NAME}
 )
 

@@ -144,13 +144,7 @@ int main(int argc, char** argv) {
     // Load XML files from the installation share directory
     std::string share_dir = ament_index_cpp::get_package_share_directory("main_task");
 
-    // Register the StartGate and AlignObject subtrees first
-    factory.registerBehaviorTreeFromFile(share_dir + "/start_gate.xml");
-    factory.registerBehaviorTreeFromFile(share_dir + "/alignobject.xml");
-    factory.registerBehaviorTreeFromFile(share_dir + "/test_align.xml");
-    factory.registerBehaviorTreeFromFile(share_dir + "/test_surge.xml");
-
-    // Build the Main Tree (which calls subtrees)
+    // Load all trees from the single consolidated XML
     auto tree = factory.createTreeFromFile(share_dir + "/main_task.xml");
 
     // Inject our Robot Context into the tree blackboard

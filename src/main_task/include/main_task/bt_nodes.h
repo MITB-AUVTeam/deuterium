@@ -214,7 +214,8 @@ public:
     Do360Turn(const std::string &name, const BT::NodeConfig &config)
             : BT::StatefulActionNode(name, config) {}
     static BT::PortsList providedPorts() {
-        return {BT::InputPort<std::string>("success_when_seen")};
+        return {BT::InputPort<std::string>("success_when_seen"),
+                BT::InputPort<int>("max_turns", 2, "Max full rotations before stopping")};
     }
     BT::NodeStatus onStart() override;
     BT::NodeStatus onRunning() override;
@@ -225,6 +226,8 @@ private:
     double prev_yaw_ = 0.0;
     double accumulated_yaw_ = 0.0;
     int confirm_frames_ = 0;
+    int max_turns_ = 2;
+    bool object_found_ = false;
 };
 
 class CenterObject : public BT::StatefulActionNode {
