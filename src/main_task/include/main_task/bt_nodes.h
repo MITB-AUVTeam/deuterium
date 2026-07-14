@@ -81,11 +81,11 @@ struct RobotContext {
             const auto &id = hyp.class_id;
             const auto &score = hyp.score;
 
-            if ((object == "GATE" || object == "main_gate") && id == "main_gate" && score >= gate_conf_thresh)
+            float thresh = (id.find("pole") != std::string::npos) ? pole_conf_thresh : gate_conf_thresh;
+
+            if ((object == "GATE" || object == "main_gate") && id == "main_gate" && score >= thresh)
                 return true;
-            if (object == "repair_and_survey" && id == "repair_and_survey" && score >= gate_conf_thresh)
-                return true;
-            if (object == "search_and_rescue" && id == "search_and_rescue" && score >= gate_conf_thresh)
+            if (object == id && score >= thresh)
                 return true;
         }
         return false;
@@ -104,21 +104,16 @@ struct RobotContext {
             const auto &id = hyp.class_id;
             const auto &score = hyp.score;
 
-            if ((object == "GATE" || object == "main_gate") && id == "main_gate" && score >= gate_conf_thresh) {
-                ox = det.bbox.center.position.x;
-                oy = det.bbox.center.position.y;
-                oz = det.bbox.center.position.z;
-                if (score_out) *score_out = score;
-                return true;
+            float thresh = (id.find("pole") != std::string::npos) ? pole_conf_thresh : gate_conf_thresh;
+
+            bool match = false;
+            if ((object == "GATE" || object == "main_gate") && id == "main_gate" && score >= thresh) {
+                match = true;
+            } else if (object == id && score >= thresh) {
+                match = true;
             }
-            if (object == "repair_and_survey" && id == "repair_and_survey" && score >= gate_conf_thresh) {
-                ox = det.bbox.center.position.x;
-                oy = det.bbox.center.position.y;
-                oz = det.bbox.center.position.z;
-                if (score_out) *score_out = score;
-                return true;
-            }
-            if (object == "search_and_rescue" && id == "search_and_rescue" && score >= gate_conf_thresh) {
+
+            if (match) {
                 ox = det.bbox.center.position.x;
                 oy = det.bbox.center.position.y;
                 oz = det.bbox.center.position.z;

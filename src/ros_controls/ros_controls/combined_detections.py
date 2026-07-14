@@ -16,14 +16,61 @@ import os
 from zed_msgs.msg import ObjectsStamped
 from auv_msgs.msg import Detection, DetectionArray
 
+import yaml
+
 # ── YOLO CLASS MAPPING ────────────────────────────────────────────────
-YOLO_CLASS_MAP = {
-    '0': 'search_and_rescue',
-    '1': 'red_pole',
-    '2': 'repair_and_survey',
-    '3': 'white_pole',
-    '4': 'main_gate'
-}
+def load_yolo_class_map():
+    # Start with default fallback mapping
+    class_map = {
+        '0': 'search_and_rescue',
+        '1': 'red_pole',
+        '2': 'repair_and_survey',
+        '3': 'white_pole',
+        '4': 'main_gate'
+    }
+    
+    # Try to load from source and share config directories to build dynamic mapping
+    config_dirs = []
+    config_dirs.append('/home/assemblex/ros2_ws/deuterium/src/ros_controls/config')
+    try:
+        from ament_index_python.packages import get_package_share_directory
+        config_dirs.append(os.path.join(get_package_share_directory('ros_controls'), 'config'))
+    except Exception:
+        pass
+
+    for config_dir in config_dirs:
+        if not os.path.exists(config_dir):
+            continue
+        try:
+            for filename in os.listdir(config_dir):
+                if not filename.endswith('.yaml'):
+                    continue
+                filepath = os.path.join(config_dir, filename)
+                try:
+                    with open(filepath, 'r') as f:
+                        data = yaml.safe_load(f)
+                    if not data or not isinstance(data, dict):
+                        continue
+                    for ns, content in data.items():
+                        if not isinstance(content, dict):
+                            continue
+                        params = content.get('ros__parameters', {})
+                        obj_det = params.get('object_detection', {})
+                        if not obj_det:
+                            continue
+                        for key, val in obj_det.items():
+                            if key.startswith('class_') and isinstance(val, dict):
+                                label = val.get('label')
+                                class_id = val.get('model_class_id')
+                                if label is not None and class_id is not None:
+                                    class_map[str(class_id)] = str(label)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+    return class_map
+
+YOLO_CLASS_MAP = load_yolo_class_map()
 
 class UnifiedDetectionNode(Node):
     def __init__(self):

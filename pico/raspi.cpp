@@ -7,7 +7,7 @@ int recbuffindex = 0;
 uint8_t recbuff[13];
 
 void raspi::init() {
-    stdio_usb_init();
+    // stdio_usb_init();
     while (!stdio_usb_connected()) {
         sleep_ms(100);
     }

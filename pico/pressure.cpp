@@ -198,7 +198,6 @@ void presens::calc_depth_0() {
     }
 
     state.z = depth();
-    state.z += 1;
 }
 
 void presens::ask_D1_5() {

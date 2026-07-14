@@ -37,8 +37,8 @@ const float tau_scale = 1.0f;
 //XtoF MATRIX
 const float XtoF[3][3] = {
     {0, -2.0000, 0.1},
-    {-2.2222, 1.0000, 0.2},
-    {2.2222, 1.0000, 0.2}
+    {-2.2222, 1.0000, -0.2},
+    {2.2222, 1.0000, -0.2}
 };
 
 
@@ -107,7 +107,7 @@ void control::navUpdate(float nav_dt) {
     HL = constrain(HL, F_MIN, F_MAX);
     HR = constrain(HR, F_MIN, F_MAX);
 
-    throttle.HL = thrustToDshot(HL);
+    throttle.HL = thrustToDshot(-HL);
     throttle.HR = thrustToDshot(HR);
 
 }
