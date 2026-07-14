@@ -8,7 +8,7 @@
       custom_class_count: 5 
 
       class_0:
-        label: 'search_and_rescue'
+        label: 'Red_Pole'
         model_class_id: 0
         enabled: true
         confidence_threshold: 50.0
@@ -16,7 +16,7 @@
         is_static: true
       
       class_1:
-        label: 'red_pole'
+        label: 'White_Pole'
         model_class_id: 1
         enabled: true
         confidence_threshold: 50.0
@@ -24,7 +24,7 @@
         is_static: true
 
       class_2:
-        label: 'repair_and_survey'
+        label: 'Survey_Repair'
         model_class_id: 2
         enabled: true
         confidence_threshold: 50.0
@@ -32,7 +32,7 @@
         is_static: true 
       
       class_3:
-        label: 'white_pole'
+        label: 'Search_Rescue'
         model_class_id: 3
         enabled: true
         confidence_threshold: 50.0
@@ -40,8 +40,16 @@
         is_static: true
       
       class_4:
-        label: 'main_gate'
+        label: 'octagon'
         model_class_id: 4
+        enabled: true
+        confidence_threshold: 30.0
+        is_grounded: false
+        is_static: true
+        
+      class_5:
+        label: 'return_home'
+        model_class_id: 5
         enabled: true
         confidence_threshold: 30.0
         is_grounded: false
