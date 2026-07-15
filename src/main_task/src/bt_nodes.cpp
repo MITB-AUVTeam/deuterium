@@ -225,7 +225,7 @@ BT::NodeStatus AlignWithObject::onRunning() {
         align_confirm_frames_ = 0;
     }
 
-    double error = -raw_norm_x;
+    double error = raw_norm_x;
     if (filtered_yaw_err_ == 0.0) {
         filtered_yaw_err_ = error;
     } else {
@@ -277,7 +277,7 @@ BT::NodeStatus AlignAndApproachObject::onRunning() {
     }
 
     double raw_norm_x = ox / std::max(oz, 0.5);
-    double error = -raw_norm_x;
+    double error = raw_norm_x;
     float yaw_cmd = (float)error;
     yaw_cmd = std::max(-ctx->base_yaw_speed, std::min(ctx->base_yaw_speed, yaw_cmd));
 
@@ -354,7 +354,7 @@ BT::NodeStatus CenterObject::onRunning() {
         align_confirm_frames_ = 0;
     }
 
-    double error = -raw_norm_x;
+    double error = raw_norm_x;
     if (filtered_yaw_err_ == 0.0) {
         filtered_yaw_err_ = error;
     } else {
@@ -594,6 +594,7 @@ BT::NodeStatus SurgeForwardDistance::onStart()
 
     auv_msgs::action::Surge::Goal goal;
     goal.distance = target_distance_;
+    goal.target_depth = ctx->target_depth;
 
     auto goal_future = surge_client_->async_send_goal(goal);
     if (rclcpp::spin_until_future_complete(ctx->node, goal_future, std::chrono::seconds(2)) !=

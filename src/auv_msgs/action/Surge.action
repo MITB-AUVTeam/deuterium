@@ -1,5 +1,6 @@
 # Goal
 float64 distance       # metres to surge forward
+float64 target_depth   # depth setpoint to hold for the surge (from BT)
 ---
 # Result
 bool success

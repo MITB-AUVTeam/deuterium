@@ -13,10 +13,8 @@ int main(int argc, char** argv) {
     ctx->node = node;
 
     // Load parameters or use defaults
-    node->declare_parameter("base_surge_speed", 0.1);
-    node->declare_parameter("base_yaw_speed", 0.1);
-    node->declare_parameter("gate_conf_thresh", 0.6);
-    node->declare_parameter("pole_conf_thresh", 0.3);
+    node->declare_parameter("base_surge_speed", 0.5);
+    node->declare_parameter("base_yaw_speed", 0.5);
     node->declare_parameter("depth_tolerance", 0.15);
     node->declare_parameter("pole_approach_threshold", 1.0);
     node->declare_parameter("gate_staystill_time", 3.0);
@@ -28,8 +26,6 @@ int main(int argc, char** argv) {
 
     ctx->base_surge_speed = node->get_parameter("base_surge_speed").as_double();
     ctx->base_yaw_speed = node->get_parameter("base_yaw_speed").as_double();
-    ctx->gate_conf_thresh = node->get_parameter("gate_conf_thresh").as_double();
-    ctx->pole_conf_thresh = node->get_parameter("pole_conf_thresh").as_double();
     ctx->depth_tolerance = node->get_parameter("depth_tolerance").as_double();
     ctx->pole_approach_threshold = node->get_parameter("pole_approach_threshold").as_double();
     ctx->gate_staystill_time = node->get_parameter("gate_staystill_time").as_double();
@@ -51,12 +47,6 @@ int main(int argc, char** argv) {
                 } else if (param.get_name() == "base_yaw_speed") {
                     ctx->base_yaw_speed = param.as_double();
                     RCLCPP_INFO(ctx->node->get_logger(), "Live Tune: base_yaw_speed -> %.2f", ctx->base_yaw_speed);
-                } else if (param.get_name() == "gate_conf_thresh") {
-                    ctx->gate_conf_thresh = param.as_double();
-                    RCLCPP_INFO(ctx->node->get_logger(), "Live Tune: gate_conf_thresh -> %.2f", ctx->gate_conf_thresh);
-                } else if (param.get_name() == "pole_conf_thresh") {
-                    ctx->pole_conf_thresh = param.as_double();
-                    RCLCPP_INFO(ctx->node->get_logger(), "Live Tune: pole_conf_thresh -> %.2f", ctx->pole_conf_thresh);
                 } else if (param.get_name() == "depth_tolerance") {
                     ctx->depth_tolerance = param.as_double();
                     RCLCPP_INFO(ctx->node->get_logger(), "Live Tune: depth_tolerance -> %.2f", ctx->depth_tolerance);

@@ -26,7 +26,7 @@
 
         object_detection:
             od_enabled: true
-            enable_tracking: true
+            enable_tracking: false
             detection_model: 'CUSTOM_YOLOLIKE_BOX_OBJECTS'
             #custom_onnx_file: '/home/cupcake/Desktop/main-tasks/src/ros_controls/models/new_model_prequal.onnx'
             custom_onnx_file: '/home/cupcake/deuterium/src/ros_controls/models/robosub.onnx'

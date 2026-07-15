@@ -1,21 +1,21 @@
 <root BTCPP_format="4">
     <BehaviorTree ID="StartGate">
         <Sequence name="start_gate_sequence">
-            <DiveToDepth target_depth="1.3"/>
+            <DiveToDepth target_depth="0.5"/>
             <!-- Step 1: Establish Straight Heading -->
             <Sequence name="establish_heading">
                 <Fallback name="find_gate">
-                    <IsObjectSeen object="shark"/>
-                    <Do360Turn success_when_seen="shark"/>
+                    <IsObjectSeen object="Survey_Repair"/>
+                    <Do360Turn success_when_seen="Survey_Repair"/>
                 </Fallback>
-                <CenterObject object="shark"/>
+                <CenterObject object="Survey_Repair"/>
                 <SaveCurrentYaw/>
             </Sequence>
 
             <!-- Step 2: Find the Picture trial -->
             <Fallback name="find_objects">
-                <FindAnyObject objects="shark,sawfish" found_object="{target_obj}"/>
-                <Do360TurnAny objects="shark,sawfish" found_object="{target_obj}"/>
+                <FindAnyObject objects="Search_Rescue,Survey_Repair" found_object="{target_obj}"/>
+                <Do360TurnAny objects="Search_Rescue,Survey_Repair" found_object="{target_obj}"/>
             </Fallback>
 
             <!-- Step 3: Approach Picture, Straighten, and Surge -->

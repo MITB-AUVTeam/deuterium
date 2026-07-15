@@ -44,10 +44,8 @@ struct RobotContext {
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub;
 
     // --- MISSION CONFIGURATION (LOADED VIA YAML) ---
-    float base_surge_speed = 1.5f;
-    float base_yaw_speed = 0.1f;
-    float gate_conf_thresh = 0.6f;
-    float pole_conf_thresh = 0.3f;
+    float base_surge_speed = 0.5f;
+    float base_yaw_speed = 0.5f;
     float depth_tolerance = 0.15f;
     float pole_approach_threshold = 1.0f;
     float gate_staystill_time = 3.0f;
@@ -84,13 +82,10 @@ struct RobotContext {
                 continue;
             const auto &hyp = det.results[0].hypothesis;
             const auto &id = hyp.class_id;
-            const auto &score = hyp.score;
 
-            float thresh = (id.find("pole") != std::string::npos) ? pole_conf_thresh : gate_conf_thresh;
-
-            if ((object == "GATE" || object == "main_gate") && id == "main_gate" && score >= thresh)
+            if ((object == "GATE" || object == "main_gate") && id == "main_gate")
                 return true;
-            if (object == id && score >= thresh)
+            if (object == id)
                 return true;
         }
         return false;
@@ -109,12 +104,10 @@ struct RobotContext {
             const auto &id = hyp.class_id;
             const auto &score = hyp.score;
 
-            float thresh = (id.find("pole") != std::string::npos) ? pole_conf_thresh : gate_conf_thresh;
-
             bool match = false;
-            if ((object == "GATE" || object == "main_gate") && id == "main_gate" && score >= thresh) {
+            if ((object == "GATE" || object == "main_gate") && id == "main_gate") {
                 match = true;
-            } else if (object == id && score >= thresh) {
+            } else if (object == id) {
                 match = true;
             }
 
