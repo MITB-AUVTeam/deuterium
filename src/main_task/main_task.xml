@@ -15,6 +15,9 @@
             <!-- TESTING SUBTREES (Uncomment one to test individually) -->
             <!-- <SubTree ID="TestAlign" _shared_blackboard="true" /> -->
             <!--<SubTree ID="TestSurge" _shared_blackboard="true" /> -->
+
+            <!-- End of mission: stop thrusters and hold at -0.3 m depth -->
+            <FinishMission target_depth="-0.3"/>
         </Sequence>
     </BehaviorTree>
 

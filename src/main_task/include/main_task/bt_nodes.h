@@ -367,6 +367,17 @@ private:
     int align_confirm_frames_ = 0;
 };
 
+class FinishMission : public BT::SyncActionNode {
+public:
+    FinishMission(const std::string &name, const BT::NodeConfig &config)
+        : BT::SyncActionNode(name, config) {}
+    static BT::PortsList providedPorts() {
+        return {BT::InputPort<double>("target_depth", -0.3,
+                                       "Depth to hold once the mission ends")};
+    }
+    BT::NodeStatus tick() override;
+};
+
 inline void registerAllNodes(BT::BehaviorTreeFactory &factory) {
     factory.registerNodeType<AllSystemsOK>("AllSystemsOK");
     factory.registerNodeType<DiveToDepth>("DiveToDepth");
@@ -381,4 +392,5 @@ inline void registerAllNodes(BT::BehaviorTreeFactory &factory) {
     factory.registerNodeType<SurgeForwardDistance>("SurgeForwardDistance");
     factory.registerNodeType<SaveCurrentYaw>("SaveCurrentYaw");
     factory.registerNodeType<AlignToLockedYaw>("AlignToLockedYaw");
+    factory.registerNodeType<FinishMission>("FinishMission");
 }

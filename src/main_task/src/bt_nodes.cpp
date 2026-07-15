@@ -532,6 +532,22 @@ void AlignToLockedYaw::onHalted() {
     getCtx(config())->stopMotion();
 }
 
+// --- FinishMission ------------------------------------------------------------
+
+BT::NodeStatus FinishMission::tick() {
+    auto ctx = getCtx(config());
+    rclcpp::spin_some(ctx->node);
+
+    auto depth_in = getInput<double>("target_depth");
+    double depth = depth_in ? depth_in.value() : -0.3;
+
+    ctx->target_depth = depth;
+    ctx->publishToPico(0.0f, 0.0f, (float)depth, 1);
+
+    RCLCPP_INFO(ctx->node->get_logger(), "[FinishMission] Mission complete. Thrusters stopped, holding depth = %.2f m.", depth);
+    return BT::NodeStatus::SUCCESS;
+}
+
 // --- StayStill --------------------------------------------------------------
 
 BT::NodeStatus StayStill::onStart() {
