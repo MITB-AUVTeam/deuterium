@@ -1,0 +1,46 @@
+<root BTCPP_format="4">
+    <!-- ================= Slalom Poles Subtree Definition ================= -->
+    <!--
+        Runs after the gate task. For each of the 3 red poles:
+          1. Locate the closest red pole (spin 360 only if none is already in view).
+          2. Stay aligned and approach it until within pole_approach_threshold (1.0 m).
+          3. Drive PAST it so the next red pole becomes the closest one.
+
+        Step 3 is essential: AlignAndApproachObject stops ~1 m in front of the pole
+        and never passes it, so without surging clear the same pole would remain the
+        closest and get re-approached every cycle. The surge puts it behind the bot,
+        so the next Do360Turn / getObjectPosition locks onto the following pole.
+    -->
+    <BehaviorTree ID="Slalom">
+        <Repeat num_cycles="3">
+            <Sequence name="slalom_one_pole">
+                <!-- 1. Find the closest red pole -->
+                <Fallback name="find_red_pole">
+                    <IsObjectSeen object="red_pole"/>
+                    <Do360Turn success_when_seen="red_pole"/>
+                </Fallback>
+
+                <!-- 2. Stay aligned and approach it -->
+                <AlignAndApproachObject object="red_pole"/>
+
+                <!-- 3. Drive past it so the next pole becomes the closest -->
+                <SurgeForwardDistance distance="2.0"/>
+            </Sequence>
+        </Repeat>
+    </BehaviorTree>
+
+    <TreeNodesModel>
+        <Condition ID="IsObjectSeen">
+            <input_port name="object" type="std::string">red_pole</input_port>
+        </Condition>
+        <Action ID="Do360Turn">
+            <input_port name="success_when_seen" type="std::string">Stop when object is seen</input_port>
+        </Action>
+        <Action ID="AlignAndApproachObject">
+            <input_port name="object" type="std::string">Object to align and approach</input_port>
+        </Action>
+        <Action ID="SurgeForwardDistance">
+            <input_port name="distance" type="double" default="1.0">metres to surge past the pole</input_port>
+        </Action>
+    </TreeNodesModel>
+</root>

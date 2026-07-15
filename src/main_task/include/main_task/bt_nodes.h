@@ -18,6 +18,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -97,6 +98,13 @@ struct RobotContext {
         if (!latest_detections)
             return false;
 
+        // Track the CLOSEST matching detection (smallest depth / z) rather than
+        // whichever happens to be first in the array, so that with several
+        // same-class objects in view (e.g. the 3 slalom poles) we lock onto
+        // the nearest one.
+        bool found = false;
+        double best_z = std::numeric_limits<double>::max();
+
         for (const auto &det : latest_detections->detections) {
             if (det.results.empty())
                 continue;
@@ -112,14 +120,18 @@ struct RobotContext {
             }
 
             if (match) {
-                ox = det.bbox.center.position.x;
-                oy = det.bbox.center.position.y;
-                oz = det.bbox.center.position.z;
-                if (score_out) *score_out = score;
-                return true;
+                double z = det.bbox.center.position.z;
+                if (z < best_z) {
+                    best_z = z;
+                    ox = det.bbox.center.position.x;
+                    oy = det.bbox.center.position.y;
+                    oz = z;
+                    if (score_out) *score_out = score;
+                    found = true;
+                }
             }
         }
-        return false;
+        return found;
     }
 
     void publishToPico(float delta_theta, float delta_distance,

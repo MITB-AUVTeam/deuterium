@@ -56,6 +56,7 @@ install(FILES
     main_task.xml
     start_gate.xml
     src/alignobject.xml
+    src/slalom.xml
     test_align.xml
     test_surge.xml
     DESTINATION share/${PROJECT_NAME}

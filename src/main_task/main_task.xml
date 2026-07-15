@@ -7,6 +7,8 @@
             <AllSystemsOK name="check_systems" timeout_s="20.0"/>
             <!-- Call the StartGate subtree (loaded from start_gate.xml) -->
             <SubTree ID="StartGate" _shared_blackboard="true" />
+            <!-- Slalom the 3 red poles (loaded from slalom.xml) -->
+            <SubTree ID="Slalom" _shared_blackboard="true" />
             <!-- Call the AlignObject subtree (loaded from alignobject.xml) -->
             <!-- <SubTree ID="AlignObject" _shared_blackboard="true" /> -->
             

@@ -137,6 +137,7 @@ int main(int argc, char** argv) {
     // Register the StartGate and AlignObject subtrees first
     factory.registerBehaviorTreeFromFile(share_dir + "/start_gate.xml");
     factory.registerBehaviorTreeFromFile(share_dir + "/alignobject.xml");
+    factory.registerBehaviorTreeFromFile(share_dir + "/slalom.xml");
     factory.registerBehaviorTreeFromFile(share_dir + "/test_align.xml");
     factory.registerBehaviorTreeFromFile(share_dir + "/test_surge.xml");
 
