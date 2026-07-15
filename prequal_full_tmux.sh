@@ -32,4 +32,4 @@ sleep 5
 # === MAIN STACK ===
 echo "Launching prequal..."
 tmux new-window -t $SESSION -n 'prequal'
-tmux send-keys -t $SESSION:prequal "cd '$SCRIPT_DIR' && source install/setup.bash && ros2 launch ros_controls mission_bt.launch.py" C-m
+tmux send-keys -t $SESSION:prequal "cd '$SCRIPT_DIR' && source install/setup.bash && ros2 launch ros_controls prequal_full.launch.py" C-m

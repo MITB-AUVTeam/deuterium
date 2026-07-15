@@ -22,12 +22,11 @@ import yaml
 def load_yolo_class_map():
     # Start with default fallback mapping
     class_map = {
-        '0': 'Red_Pole',
-        '1': 'White_Pole',
-        '2': 'Survey_Repair',
-        '3': 'Search_Rescue',
-        '4': 'octagon',
-        '5': 'return_home'
+        '0': 'search_and_rescue',
+        '1': 'red_pole',
+        '2': 'repair_and_survey',
+        '3': 'white_pole',
+        '4': 'main_gate'
     }
     
     # Try to load from source and share config directories to build dynamic mapping
