@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
     node->declare_parameter("depth_tolerance", 0.15);
     node->declare_parameter("pole_approach_threshold", 1.0);
     node->declare_parameter("gate_staystill_time", 3.0);
-    node->declare_parameter("align_obj_threshold", 0.04);
+    node->declare_parameter("align_obj_threshold", 0.18);
     node->declare_parameter("align_yaw_threshold", 0.10);
     node->declare_parameter("camera_alpha", 0.25);
     node->declare_parameter("align_confirm_frames", 5);

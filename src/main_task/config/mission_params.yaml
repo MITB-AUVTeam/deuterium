@@ -5,7 +5,7 @@ main_task_node:
     depth_tolerance: 0.15
     pole_approach_threshold: 1.0
     gate_staystill_time: 3.0
-    align_obj_threshold: 0.04
+    align_obj_threshold: 0.18
     align_yaw_threshold: 0.10
     camera_alpha: 0.25
     align_confirm_frames: 5

@@ -49,7 +49,7 @@ struct RobotContext {
     float depth_tolerance = 0.15f;
     float pole_approach_threshold = 1.0f;
     float gate_staystill_time = 3.0f;
-    float align_obj_threshold = 0.04f;
+    float align_obj_threshold = 0.18f;
     float align_yaw_threshold = 0.10f;
     float camera_alpha = 0.25f;
     int align_confirm_frames = 5;
